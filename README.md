@@ -47,6 +47,35 @@ A Node.js application that monitors the National Vulnerability Database (NVD) fo
 5. **Access the web interface**
    Open http://localhost:3000 in your browser
 
+## Production Deployment
+
+For production deployment using pre-built images from GHCR:
+
+1. **Set up environment variables**
+   ```bash
+   # Copy the environment template
+   cp env_template .env
+   
+   # Edit .env with your configuration
+   nano .env
+   ```
+
+2. **Configure user permissions (for rootless Docker)**
+   ```bash
+   # Set your user ID and group ID in .env
+   echo "USER_ID=$(id -u)" >> .env
+   echo "GROUP_ID=$(id -g)" >> .env
+   ```
+
+3. **Start production environment**
+   ```bash
+   docker compose -f docker-compose.production.yml up -d
+   ```
+
+4. **Access the application**
+   - Frontend: http://localhost
+   - Backend API: http://localhost/api
+
 ## Manual Installation
 
 1. **Install dependencies**

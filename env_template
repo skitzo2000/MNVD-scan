@@ -12,3 +12,10 @@ NODE_ENV=production
 
 # Database Configuration (optional - defaults to SQLite in data/ directory)
 # DB_PATH=/app/data/nvd_scanner.db
+
+# Docker User Configuration (for rootless Docker compatibility)
+# Set these to match your current user ID and group ID
+# Run: id -u and id -g to get your values
+# If not set, containers will run as root (not recommended for production)
+USER_ID=1000
+GROUP_ID=1000

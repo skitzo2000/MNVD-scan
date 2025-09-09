@@ -15,17 +15,12 @@ RUN npm install --only=production && npm cache clean --force
 # Copy backend source code
 COPY . .
 
-# Create app user for security
-RUN addgroup -g 1001 -S appuser && \
-    adduser -S -D -H -u 1001 -h /app -s /sbin/nologin -G appuser -g appuser appuser
-
 # Create data directory for SQLite database
 RUN mkdir -p /app/data && \
-    chown -R appuser:appuser /app && \
     chmod -R 755 /app
 
-# Switch to non-root user
-USER appuser
+# User mapping is handled by docker-compose at runtime
+# This allows the container to work with any UID/GID passed at runtime
 
 # Expose port
 EXPOSE 3000
