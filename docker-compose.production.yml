@@ -21,8 +21,7 @@ services:
 
   backend:
     image: ghcr.io/skitzo2000/mnvd-scan-backend:latest
-    ports:
-      - "3000:3000"
+    # No ports exposed - backend only accessible internally
     environment:
       - NODE_ENV=production
       - NVD_API_KEY=${NVD_API_KEY}
