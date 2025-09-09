@@ -2,7 +2,8 @@
 # NVD Attribution: This product uses the NVD API but is not endorsed or certified by the NVD.
 # This compose file uses pre-built images from GHCR
 #
-# User mapping: Both services run as UID/GID 1001 (appuser) for security
+# User mapping: Backend runs as UID/GID 1001 (appuser) for security
+# Frontend nginx runs as root (required for nginx operation)
 # Set USER_ID and GROUP_ID environment variables to match your host user if needed
 
 version: '3.8'
@@ -12,7 +13,6 @@ services:
     image: ghcr.io/skitzo2000/mnvd-scan-frontend:latest
     ports:
       - "80:80"
-    user: "${USER_ID:-1001}:${GROUP_ID:-1001}"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]

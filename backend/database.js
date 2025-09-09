@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Use the data directory for the database
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, '../data/nvd_scanner.db');
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data/nvd_scanner.db');
 
 // Initialize database connection
 async function initializeDatabase() {
