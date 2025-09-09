@@ -1,0 +1,52 @@
+# MNVD Production Docker Compose
+# NVD Attribution: This product uses the NVD API but is not endorsed or certified by the NVD.
+# This compose file uses pre-built images from GHCR
+
+version: '3.8'
+
+services:
+  frontend:
+    image: ghcr.io/skitzo2000/mnvd-scan-frontend:latest
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - mnvd-network
+
+  backend:
+    image: ghcr.io/skitzo2000/mnvd-scan-backend:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NVD_API_KEY=${NVD_API_KEY}
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+      - PORT=3000
+    volumes:
+      - ./data:/app/data:rw
+    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - mnvd-network
+    depends_on:
+      - frontend
+
+networks:
+  mnvd-network:
+    driver: bridge
+
+volumes:
+  data:
+    driver: local

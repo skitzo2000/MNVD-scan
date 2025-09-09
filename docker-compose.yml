@@ -1,20 +1,34 @@
-# MNVD Docker Compose
+# MNVD Development Docker Compose
 # NVD Attribution: This product uses the NVD API but is not endorsed or certified by the NVD.
+# This compose file builds images locally for development
+
+version: '3.8'
 
 services:
-  mnvd:
+  frontend:
     build:
-      context: .
-      dockerfile: ./Dockerfile.node
+      context: ./frontend
+      dockerfile: ./frontend/Dockerfile
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    networks:
+      - mnvd-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ./backend/Dockerfile
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - NVD_API_KEY=${NVD_API_KEY}
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
       - PORT=3000
     volumes:
       - ./data:/app/data:rw
+      - ./backend:/app:rw
     user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
     restart: unless-stopped
     healthcheck:
@@ -23,3 +37,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - mnvd-network
+    depends_on:
+      - frontend
+
+networks:
+  mnvd-network:
+    driver: bridge
