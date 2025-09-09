@@ -1,0 +1,25 @@
+# MNVD Docker Compose
+# NVD Attribution: This product uses the NVD API but is not endorsed or certified by the NVD.
+
+services:
+  mnvd:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.node
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NVD_API_KEY=${NVD_API_KEY}
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+      - PORT=3000
+    volumes:
+      - ./data:/app/data:rw
+    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

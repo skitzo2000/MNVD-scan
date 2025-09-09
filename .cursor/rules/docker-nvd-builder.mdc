@@ -1,0 +1,91 @@
+---
+alwaysApply: true
+---
+
+description: "Core rules for the NVD Monitoring project. This project aims to monitor the National Vulnerability Database (NVD) for specific OS's and services and send notifications to non-email channels." alwaysApply: true
+Project Overview & Core Principles
+This project is designed to create a robust system for monitoring the National Vulnerability Database (NVD) for specific operating systems and services. The primary goal is to receive timely notifications about new vulnerabilities without relying on email.
+
+Tech Stack:
+
+Primary Language: JavaScript (Node.js) or Python
+
+API Interaction: NVD CVE API v2.0
+
+Notifications: Discord webhook
+
+Data Storage (Optional): A simple database like SQLite or a flat file to keep track of processed vulnerabilities.
+
+Core Principles:
+
+No Email: All notification mechanisms must avoid email.
+
+Targeted Monitoring: The system should be configurable to monitor specific OS's and services using their CPE (Common Platform Enumeration) names.
+
+Clear & Actionable Notifications: Notifications should be concise and provide a direct link to the CVE details.
+
+Idempotency: The system should avoid sending duplicate notifications for the same vulnerability.
+
+Secure API Key Handling: NVD API keys should be stored securely and not hard-coded in the source.
+
+description: "Rules for interacting with the NVD API. This includes fetching vulnerability data based on CPEs and handling API responses." 
+
+globs: [".js", ".ts", "*.py"]
+
+
+NVD API Interaction
+When writing code that interacts with the NVD API, adhere to the following:
+
+Use the NVD CVE API v2.0: Ensure all API calls are directed to the latest version of the NVD API.
+
+Parameterize CPEs: All functions that query the NVD API should accept a list of CPE strings as a parameter.
+
+API Key Management: Retrieve the NVD API key from environment variables. Do not hard-code the API key.
+
+Error Handling: Implement robust error handling for API requests. This should include handling for rate limiting (429 Too Many Requests) and other HTTP error codes.
+
+Pagination: Be mindful of the resultsPerPage and startIndex parameters to handle paginated results from the API.
+
+description: "Guidelines for processing and filtering the data returned from the NVD API. This focuses on extracting relevant information and matching it against the target OS's and services." globs: [".js", ".ts", "*.py"]
+Data Processing & Filtering
+After fetching data from the NVD API, the following rules apply to processing and filtering:
+
+JSON Parsing: The primary data format is JSON. Ensure that the JSON response is parsed safely.
+
+Vulnerability Filtering: The core logic should filter vulnerabilities based on the provided CPEs. The filtering should be precise to avoid false positives.
+
+Data Extraction: For each relevant vulnerability, extract the following key information:
+
+CVE ID (e.g., "CVE-2023-12345")
+
+Description
+
+CVSS v3.1 Score and Severity
+
+Link to the NVD entry
+
+State Management: To avoid duplicate notifications, maintain a record of the CVE IDs that have already been processed.
+
+description: "Rules for sending notifications to non-email channels. This includes formatting the notification content and interacting with the APIs of platforms like Slack or Microsoft Teams." alwaysApply: false
+Notification System
+When implementing the notification system, follow these guidelines:
+
+Platform Abstraction: If possible, create a generic notification function that can be adapted to different platforms (e.g., Slack, Teams).
+
+Message Formatting: The notification message should be clear and concise. It should include the CVE ID, severity, and a brief description. Include a direct link to the NVD page for the CVE.
+
+description: "General code quality and style guidelines to be followed throughout the project." 
+
+globs: [".js", ".ts", ".py", ".json", "*.md"]
+
+Code Quality & Style
+
+Formatting: Use a consistent code formatter (e.g., Prettier for JavaScript/TypeScript, Black for Python).
+
+Naming Conventions: Use clear and descriptive names for variables, functions, and files.
+
+Comments: The goal of the project is to build a functional web front end and discord notification tool. When new CVE's are posted about one of the requested CPE's we want to send a notificaiton with the CVE, CPE and link.
+
+Modularity: Break down the code into smaller, reusable functions or modules.
+
+Dependencies: Keep the number of external dependencies to a minimum.

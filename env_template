@@ -1,0 +1,14 @@
+# NVD API Configuration
+# Get your API key from: https://nvd.nist.gov/developers/request-an-api-key
+NVD_API_KEY=your_nvd_api_key_here
+
+# Discord Configuration
+# Create a webhook in your Discord server settings
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/your_webhook_id/your_webhook_token
+
+# Application Configuration
+PORT=3000
+NODE_ENV=production
+
+# Database Configuration (optional - defaults to SQLite in data/ directory)
+# DB_PATH=/app/data/nvd_scanner.db
