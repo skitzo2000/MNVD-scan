@@ -1,8 +1,14 @@
 # Backend Dockerfile for NVD Scanner
-FROM node:18-alpine AS base
+FROM node:18-slim AS base
 
-# Install dependencies for native modules
-RUN apk add --no-cache python3 make g++
+# Install dependencies for native modules and SQLite
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    sqlite3 \
+    libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

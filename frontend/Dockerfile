@@ -15,17 +15,19 @@ COPY . .
 # Build the React app
 RUN npm run build
 
-# Production stage with nginx
-FROM nginx:alpine AS production
+# Production stage with serve
+FROM node:18-alpine AS production
 
-# Copy built React app to nginx
-COPY --from=builder /app/build /usr/share/nginx/html
+# Install serve globally
+RUN npm install -g serve
 
-# Copy nginx configuration for React Router
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /app
+
+# Copy built React app
+COPY --from=builder /app/build .
 
 # Expose port 80
 EXPOSE 80
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start serve
+CMD ["serve", "-s", ".", "-l", "80"]

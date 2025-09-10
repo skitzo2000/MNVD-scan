@@ -21,7 +21,7 @@ A Node.js application that monitors the National Vulnerability Database (NVD) fo
 - NVD API Key (get one from [NVD Developers](https://nvd.nist.gov/developers/request-an-api-key))
 - Discord Webhook URL
 
-## Quick Start with Docker
+## Quick Start with Docker (Development)
 
 1. **Clone the repository and navigate to the project directory**
    ```bash
@@ -30,7 +30,7 @@ A Node.js application that monitors the National Vulnerability Database (NVD) fo
 
 2. **Create environment file**
    ```bash
-   cp env.example .env
+   cp env_template .env
    ```
 
 3. **Edit `.env` with your API keys**
@@ -39,13 +39,14 @@ A Node.js application that monitors the National Vulnerability Database (NVD) fo
    DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/your_webhook_id/your_webhook_token
    ```
 
-4. **Build and run with Docker Compose**
+4. **Build and run with Docker Compose (Development)**
    ```bash
-   docker compose -f docker-compose.yml up --build
+   docker compose up --build
    ```
 
 5. **Access the web interface**
-   Open http://localhost:3000 in your browser
+   - Frontend: http://localhost:80
+   - Backend API: http://localhost:3000
 
 ## Production Deployment
 

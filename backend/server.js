@@ -30,8 +30,8 @@ app.use('/api/', limiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static frontend files
-app.use(express.static(path.join(__dirname, '../frontend/build')));
+// Static files are served by nginx in production
+// app.use(express.static(path.join(__dirname, '../frontend/build')));
 
 // API Routes
 app.get('/api/health', (req, res) => {
@@ -198,10 +198,10 @@ app.get('/api/queries/:id/cves', async (req, res) => {
   }
 });
 
-// Catch-all handler for frontend routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
-});
+// Catch-all handler for frontend routes - handled by nginx in production
+// app.get('*', (req, res) => {
+//   res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
+// });
 
 // Error handling middleware
 app.use((err, req, res, next) => {

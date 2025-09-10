@@ -11,7 +11,14 @@ async function initializeDatabase() {
     // Ensure the data directory exists and has proper permissions
     const dataDir = path.dirname(DB_PATH);
     try {
+      console.log(`Checking data directory: ${dataDir}`);
+      console.log(`Database path: ${DB_PATH}`);
+      console.log(`Current working directory: ${process.cwd()}`);
+      console.log(`Process UID: ${process.getuid()}`);
+      console.log(`Process GID: ${process.getgid()}`);
+      
       if (!fs.existsSync(dataDir)) {
+        console.log(`Creating data directory: ${dataDir}`);
         fs.mkdirSync(dataDir, { recursive: true, mode: 0o755 });
         console.log(`Created data directory: ${dataDir}`);
       } else {
@@ -21,6 +28,20 @@ async function initializeDatabase() {
       // Check directory permissions
       const stats = fs.statSync(dataDir);
       console.log(`Data directory permissions: ${stats.mode.toString(8)}`);
+      console.log(`Data directory UID: ${stats.uid}`);
+      console.log(`Data directory GID: ${stats.gid}`);
+      
+      // Test write permissions
+      const testFile = path.join(dataDir, 'test_write.tmp');
+      try {
+        fs.writeFileSync(testFile, 'test');
+        fs.unlinkSync(testFile);
+        console.log('Write test successful');
+      } catch (writeErr) {
+        console.error('Write test failed:', writeErr);
+        reject(new Error(`Cannot write to data directory: ${writeErr.message}`));
+        return;
+      }
     } catch (dirErr) {
       console.error('Error with data directory:', dirErr);
       reject(dirErr);
@@ -29,7 +50,7 @@ async function initializeDatabase() {
 
     console.log(`Attempting to connect to database at: ${DB_PATH}`);
 
-    const db = new sqlite3.Database(DB_PATH, (err) => {
+    const db = new sqlite3.Database(DB_PATH, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
       if (err) {
         console.error('Database connection error:', err);
         console.error('Database path:', DB_PATH);
@@ -40,11 +61,34 @@ async function initializeDatabase() {
 
       console.log('Database connection successful');
 
+      // Set SQLite3 configuration for stability
+      console.log('Setting SQLite3 configuration...');
+      db.run('PRAGMA journal_mode = WAL', (walErr) => {
+        if (walErr) {
+          console.error('Error setting WAL mode:', walErr);
+        } else {
+          console.log('WAL mode enabled');
+        }
+      });
+      
+      db.run('PRAGMA synchronous = NORMAL', (syncErr) => {
+        if (syncErr) {
+          console.error('Error setting synchronous mode:', syncErr);
+        } else {
+          console.log('Synchronous mode set to NORMAL');
+        }
+      });
+
       // Enable foreign keys
+      console.log('Setting foreign keys...');
       db.run('PRAGMA foreign_keys = ON', (pragmaErr) => {
         if (pragmaErr) {
           console.error('Error setting foreign keys:', pragmaErr);
+          reject(pragmaErr);
+          return;
         }
+        
+        console.log('Foreign keys enabled successfully');
 
         // Create tables only if they don't exist
         console.log('Ensuring database tables exist...');
@@ -53,12 +97,16 @@ async function initializeDatabase() {
             console.log('Database tables verified/created successfully');
             
             // Test query to verify data exists
+            console.log('Testing database with count query...');
             db.all('SELECT COUNT(*) as count FROM queries', (countErr, rows) => {
               if (countErr) {
                 console.error('Error counting queries:', countErr);
-              } else {
-                console.log(`Database contains ${rows[0].count} queries`);
+                reject(countErr);
+                return;
               }
+              
+              console.log(`Database contains ${rows[0].count} queries`);
+              console.log('Database initialization complete, resolving...');
               resolve(db);
             });
           })
@@ -67,6 +115,12 @@ async function initializeDatabase() {
             reject(tableErr);
           });
       });
+    });
+
+    // Add error handler for the database connection
+    db.on('error', (err) => {
+      console.error('Database error event:', err);
+      reject(err);
     });
   });
 }
@@ -87,14 +141,17 @@ async function createTables(db) {
   // Create tables sequentially
   try {
     console.log('Creating queries table...');
+    console.log('About to execute:', createQueriesTable);
     await runQuery(db, createQueriesTable);
     console.log('Queries table created successfully');
 
     console.log('Creating processed_cves table...');
+    console.log('About to execute:', createProcessedCVEsTable);
     await runQuery(db, createProcessedCVEsTable);
     console.log('Processed CVEs table created successfully');
 
     console.log('Creating scan_logs table...');
+    console.log('About to execute:', createScanLogsTable);
     await runQuery(db, createScanLogsTable);
     console.log('Scan logs table created successfully');
 
@@ -113,13 +170,25 @@ async function createTables(db) {
 // Helper function to run SQL queries as promises
 function runQuery(db, sql, params = []) {
   return new Promise((resolve, reject) => {
-    db.run(sql, params, function(err) {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(this);
-      }
-    });
+    console.log(`Executing SQL: ${sql}`);
+    console.log(`With params: ${JSON.stringify(params)}`);
+    
+    try {
+      db.run(sql, params, function(err) {
+        if (err) {
+          console.error(`SQL Error: ${err.message}`);
+          console.error(`SQL Code: ${err.code}`);
+          console.error(`Full error:`, err);
+          reject(err);
+        } else {
+          console.log(`SQL executed successfully. Changes: ${this.changes}`);
+          resolve(this);
+        }
+      });
+    } catch (syncErr) {
+      console.error(`Synchronous error in runQuery:`, syncErr);
+      reject(syncErr);
+    }
   });
 }
 
@@ -127,11 +196,22 @@ function runQuery(db, sql, params = []) {
 async function runMigrations(db) {
   try {
     // Check if published_date column exists in processed_cves table
+    console.log('Checking table info for processed_cves...');
     const tableInfo = await new Promise((resolve, reject) => {
-      db.all("PRAGMA table_info(processed_cves)", (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
-      });
+      try {
+        db.all("PRAGMA table_info(processed_cves)", (err, rows) => {
+          if (err) {
+            console.error('Error getting table info:', err);
+            reject(err);
+          } else {
+            console.log('Table info retrieved successfully');
+            resolve(rows);
+          }
+        });
+      } catch (syncErr) {
+        console.error('Synchronous error in table info query:', syncErr);
+        reject(syncErr);
+      }
     });
 
     const hasPublishedDate = tableInfo.some(col => col.name === 'published_date');
@@ -158,11 +238,22 @@ async function backfillPublishedDates(db) {
     console.log('Checking for CVEs with missing published dates...');
     
     // Get CVEs without published dates
+    console.log('Querying CVEs without published dates...');
     const cvesWithoutDates = await new Promise((resolve, reject) => {
-      db.all('SELECT cve_id FROM processed_cves WHERE published_date IS NULL', (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
-      });
+      try {
+        db.all('SELECT cve_id FROM processed_cves WHERE published_date IS NULL', (err, rows) => {
+          if (err) {
+            console.error('Error querying CVEs without dates:', err);
+            reject(err);
+          } else {
+            console.log(`Found ${rows.length} CVEs without published dates`);
+            resolve(rows);
+          }
+        });
+      } catch (syncErr) {
+        console.error('Synchronous error in CVEs query:', syncErr);
+        reject(syncErr);
+      }
     });
 
     if (cvesWithoutDates.length === 0) {
