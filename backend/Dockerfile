@@ -16,7 +16,10 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install --only=production && npm cache clean --force
+RUN npm ci --only=production && npm cache clean --force
+
+# Verify critical dependencies are installed
+RUN node -e "require('dotenv'); require('express'); require('sqlite3'); require('axios'); require('cors'); require('helmet'); console.log('All critical dependencies found')"
 
 # Copy backend source code
 COPY . .
