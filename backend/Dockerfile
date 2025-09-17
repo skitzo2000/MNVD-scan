@@ -24,9 +24,13 @@ RUN node -e "require('dotenv'); require('express'); require('sqlite3'); require(
 # Copy backend source code
 COPY . .
 
+# Make init script executable
+RUN chmod +x init-db.js
+
 # Create data directory for SQLite database
 RUN mkdir -p /app/data && \
-    chmod -R 755 /app
+    chmod -R 755 /app && \
+    chown -R node:node /app/data
 
 # User mapping is handled by docker-compose at runtime
 # This allows the container to work with any UID/GID passed at runtime
@@ -38,5 +42,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/api/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"
 
-# Start the application
-CMD ["node", "server.js"]
+# Start the application with database initialization
+CMD ["sh", "-c", "node init-db.js && node server.js"]
