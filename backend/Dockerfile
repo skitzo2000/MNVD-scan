@@ -27,13 +27,13 @@ COPY . .
 # Make init script executable
 RUN chmod +x init-db.js
 
-# Create data directory for SQLite database
+# Create data directory for SQLite database and ensure node user owns it
 RUN mkdir -p /app/data && \
-    chmod -R 755 /app && \
-    chown -R node:node /app/data
+    chown -R node:node /app/data && \
+    chmod -R 755 /app
 
 # User mapping is handled by docker-compose at runtime
-# This allows the container to work with any UID/GID passed at runtime
+# The data directory is owned by node user for proper permissions
 
 # Expose port
 EXPOSE 3000
