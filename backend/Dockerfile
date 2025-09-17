@@ -29,7 +29,7 @@ RUN chmod +x init-db.js
 
 # Create data directory for SQLite database and ensure node user owns it
 RUN mkdir -p /app/data && \
-    chown -R node:node /app/data && \
+    chown -R node:node /app && \
     chmod -R 755 /app
 
 # User mapping is handled by docker-compose at runtime
