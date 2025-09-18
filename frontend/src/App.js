@@ -72,17 +72,6 @@ function App() {
     loadData();
   }, []);
 
-  // Manage aria-hidden attribute to fix accessibility warning
-  useEffect(() => {
-    const rootElement = document.getElementById('root');
-    if (rootElement) {
-      if (openDialog || openCVEDialog) {
-        // Remove aria-hidden when dialog is open to prevent accessibility warning
-        rootElement.removeAttribute('aria-hidden');
-      }
-    }
-  }, [openDialog, openCVEDialog]);
-
   const loadData = async () => {
     try {
       setLoading(true);
@@ -591,11 +580,7 @@ function App() {
         onClose={handleCloseDialog} 
         maxWidth="sm" 
         fullWidth
-        disablePortal={true}
         disableScrollLock={true}
-        disableEscapeKeyDown={false}
-        onBackdropClick={handleCloseDialog}
-        aria-hidden={undefined}
       >
         <DialogTitle>Add New Vulnerability Query</DialogTitle>
         <DialogContent>
@@ -654,11 +639,7 @@ function App() {
         onClose={handleCloseCVEDialog} 
         maxWidth="md" 
         fullWidth
-        disablePortal={true}
         disableScrollLock={true}
-        disableEscapeKeyDown={false}
-        onBackdropClick={handleCloseCVEDialog}
-        aria-hidden={undefined}
       >
         <DialogTitle>
           CVE Details for {selectedQuery?.name || `Query ${selectedQuery?.id}`}
