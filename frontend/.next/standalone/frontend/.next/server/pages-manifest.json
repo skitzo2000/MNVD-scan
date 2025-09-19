@@ -1,0 +1,11 @@
+{
+  "/_app": "pages/_app.js",
+  "/_error": "pages/_error.js",
+  "/_document": "pages/_document.js",
+  "/api/queries-with-stats": "pages/api/queries-with-stats.js",
+  "/api/queries": "pages/api/queries.js",
+  "/api/scan": "pages/api/scan.js",
+  "/api/stats": "pages/api/stats.js",
+  "/": "pages/index.html",
+  "/404": "pages/404.html"
+}

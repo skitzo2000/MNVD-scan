@@ -29,12 +29,23 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "80:80"
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - BACKEND_URL=http://backend:3000
     restart: unless-stopped
     networks:
       - mnvd-network
     depends_on:
       - backend
+    # Rootless Docker compatibility - no user mapping needed for frontend
+    # as the Dockerfile already handles non-root user creation
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 networks:
   mnvd-network:

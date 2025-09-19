@@ -1,5 +1,5 @@
 # Backend Dockerfile for NVD Scanner
-FROM node:18-slim AS base
+FROM node:20-slim AS base
 
 # Install dependencies for native modules and SQLite
 RUN apt-get update && apt-get install -y \
