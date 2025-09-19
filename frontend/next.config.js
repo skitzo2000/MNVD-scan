@@ -2,10 +2,8 @@
 const nextConfig = {
   // Enable standalone output for Docker optimization
   output: 'standalone',
-  
   // Specify the workspace root to avoid lockfile detection issues
   outputFileTracingRoot: process.cwd(),
-  
   // API proxy configuration for development
   async rewrites() {
     return [
