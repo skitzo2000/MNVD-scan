@@ -12,10 +12,20 @@ dist/
 .next/
 out/
 
-# Next.js cache
+# Next.js cache and build artifacts
 .next/cache/
 .next/static/
 .next/standalone/
+.next/trace
+.next/BUILD_ID
+.next/build-manifest.json
+.next/server/
+.next/export/
+
+# Next.js development
+.next/static/chunks/
+.next/static/css/
+.next/static/media/
 
 # Environment files
 .env

@@ -50,6 +50,16 @@ jobs:
         run: |
           cd frontend
           npm run build
+          
+      - name: Verify no build artifacts in git
+        run: |
+          if git status --porcelain | grep -E "\.next/|out/"; then
+            echo "❌ Build artifacts found in git - this should not happen!"
+            echo "Please update .gitignore to exclude build directories"
+            exit 1
+          else
+            echo "✅ No build artifacts in git - good!"
+          fi
 
       - name: Test backend dependencies
         run: |
