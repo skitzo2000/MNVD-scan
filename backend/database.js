@@ -1,6 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
+const { execSync } = require('child_process');
 
 // Use the data directory for the database
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data/nvd_scanner.db');
@@ -31,16 +32,28 @@ async function initializeDatabase() {
       console.log(`Data directory UID: ${stats.uid}`);
       console.log(`Data directory GID: ${stats.gid}`);
       
-      // Test write permissions
-      const testFile = path.join(dataDir, 'test_write.tmp');
+      // List directory contents to verify ownership
       try {
-        fs.writeFileSync(testFile, 'test');
-        fs.unlinkSync(testFile);
-        console.log('Write test successful');
-      } catch (writeErr) {
-        console.error('Write test failed:', writeErr);
-        reject(new Error(`Cannot write to data directory: ${writeErr.message}`));
-        return;
+        console.log('Directory contents:');
+        const lsOutput = execSync(`ls -la "${dataDir}"`, { encoding: 'utf8' });
+        console.log(lsOutput);
+      } catch (lsErr) {
+        console.log('Could not list directory contents:', lsErr.message);
+      }
+
+      // Check if database file exists, create empty one if not
+      if (!fs.existsSync(DB_PATH)) {
+        console.log('Database file does not exist, creating empty database file...');
+        try {
+          fs.writeFileSync(DB_PATH, '');
+          console.log('Empty database file created successfully');
+        } catch (createErr) {
+          console.error('Failed to create database file:', createErr);
+          reject(createErr);
+          return;
+        }
+      } else {
+        console.log('Database file exists');
       }
     } catch (dirErr) {
       console.error('Error with data directory:', dirErr);
