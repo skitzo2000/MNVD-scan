@@ -44,7 +44,7 @@ jobs:
       - name: Lint frontend
         run: |
           cd frontend
-          npm run lint
+          npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0
 
       - name: Build Next.js frontend
         run: |
