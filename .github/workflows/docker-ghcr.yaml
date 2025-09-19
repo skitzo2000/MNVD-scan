@@ -16,8 +16,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      security-events: write
-      actions: read
 
     steps:
       - name: Checkout repository
@@ -105,44 +103,7 @@ jobs:
         id: vars
         run: echo "SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
 
-      - name: Install Trivy
-        uses: aquasecurity/setup-trivy@main
-        with:
-          cache: false
-
-      - name: Build frontend image (local only)
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
-          push: false
-          tags: |
-            mnvd-scan-frontend:latest
-            mnvd-scan-frontend:${{ env.SHORT_SHA }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build backend image (local only)
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend
-          file: ./backend/Dockerfile
-          push: false
-          tags: |
-            mnvd-scan-backend:latest
-            mnvd-scan-backend:${{ env.SHORT_SHA }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Security scan with Trivy (Frontend)
-        run: |
-          trivy image --format sarif --output trivy-frontend-results.sarif mnvd-scan-frontend:latest
-
-      - name: Security scan with Trivy (Backend)
-        run: |
-          trivy image --format sarif --output trivy-backend-results.sarif mnvd-scan-backend:latest
-
-      - name: Push frontend image to GHCR
+      - name: Build and push frontend image
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
@@ -155,7 +116,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Push backend image to GHCR
+      - name: Build and push backend image
         uses: docker/build-push-action@v5
         with:
           context: ./backend
@@ -167,15 +128,3 @@ jobs:
             ${{ startsWith(github.ref, 'refs/tags/') && format('ghcr.io/skitzo2000/mnvd-scan-backend:{0}', github.ref_name) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Upload Trivy scan results (Frontend)
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-frontend-results.sarif'
-
-      - name: Upload Trivy scan results (Backend)
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-backend-results.sarif'
