@@ -1,4 +1,3 @@
-import React from 'react';
 import { Box, Typography, Tooltip } from '@mui/material';
 import { Security as SecurityIcon } from '@mui/icons-material';
 

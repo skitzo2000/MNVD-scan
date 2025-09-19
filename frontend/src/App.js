@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Box, Grid, Snackbar, Alert, CircularProgress } from '@mui/material';
 import axios from 'axios';
 
@@ -20,7 +20,7 @@ import { useQueries, useStats, useQueriesWithStats, useCVEs } from '../component
 
 function App() {
   // Use SWR hooks for data fetching with caching and performance optimization
-  const { queries, isLoading: queriesLoading, mutate: mutateQueries } = useQueries();
+  const { isLoading: queriesLoading, mutate: mutateQueries } = useQueries();
   const { stats, isLoading: statsLoading } = useStats();
   const { queriesWithStats, isLoading: queriesWithStatsLoading, mutate: mutateQueriesWithStats } = useQueriesWithStats();
   
@@ -38,7 +38,7 @@ function App() {
   });
 
   // Use SWR for CVE data when a query is selected
-  const { cves: selectedQueryCVEs, isLoading: cveLoading, mutate: mutateCVEs } = useCVEs(selectedQuery?.id);
+  const { cves: selectedQueryCVEs, isLoading: cveLoading } = useCVEs(selectedQuery?.id);
 
   // Combined loading state
   const loading = queriesLoading || statsLoading || queriesWithStatsLoading;
@@ -61,7 +61,7 @@ function App() {
 
   const handleCreateQuery = async (newQuery) => {
     try {
-      const response = await axios.post('/api/queries', newQuery);
+      await axios.post('/api/queries', newQuery);
       // Optimistically update the cache
       mutateQueries();
       mutateQueriesWithStats();

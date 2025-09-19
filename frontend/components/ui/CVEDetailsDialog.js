@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -55,7 +54,7 @@ const CVEDetailsDialog = ({
               Found {cves.length} CVE{cves.length !== 1 ? 's' : ''}:
             </Typography>
             <Box sx={{ maxHeight: '400px', overflowY: 'auto' }}>
-              {cves.map((cve, index) => (
+              {cves.map((cve) => (
                 <Paper key={cve.cve_id} elevation={1} sx={{ p: 2, mb: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                     <Typography 

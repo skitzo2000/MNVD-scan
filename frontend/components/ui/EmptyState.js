@@ -1,9 +1,7 @@
-import React from 'react';
 import {
   Paper,
   Typography,
-  Button,
-  Box
+  Button
 } from '@mui/material';
 import {
   Add as AddIcon,

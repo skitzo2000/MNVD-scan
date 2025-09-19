@@ -1,37 +1,39 @@
 {
-  "name": "mnvd",
+  "name": "nvd-scanner-frontend",
   "version": "1.0.0",
-  "description": "MNVD - Monitor National Vulnerability Database with Discord notifications",
-  "_nvd_attribution": "This product uses the NVD API but is not endorsed or certified by the NVD.",
-  "main": "backend/server.js",
+  "description": "Frontend for NVD Scanner",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "start": "node backend/server.js",
-    "dev": "nodemon backend/server.js",
-    "build": "npm run build:backend && npm run build:frontend",
-    "build:backend": "cd backend && npm run build",
-    "build:frontend": "cd frontend && npm run build",
-    "docker:build": "docker build -f docker/Dockerfile -t mnvd .",
-    "docker:run": "docker run -p 3000:3000 --env-file .env mnvd",
-    "audit": "npm audit",
-    "audit:fix": "npm audit fix"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "type-check": "tsc --noEmit",
+    "analyze": "ANALYZE=true next build",
+    "build:production": "NODE_ENV=production next build",
+    "clean": "rm -rf .next out node_modules/.cache"
   },
-  "keywords": ["nvd", "cve", "security", "discord", "scanner"],
-  "author": "",
-  "license": "MIT",
   "dependencies": {
-    "express": "^4.21.1",
+    "next": "^15.5.3",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "@mui/material": "^7.3.2",
+    "@mui/icons-material": "^7.3.2",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@emotion/cache": "^11.14.0",
     "axios": "^1.7.9",
-    "sqlite3": "^5.1.7",
-    "node-cron": "^3.0.3",
-    "dotenv": "^16.4.7",
-    "cors": "^2.8.5",
-    "helmet": "^8.0.0",
-    "express-rate-limit": "^7.4.1"
+    "swr": "^2.2.4"
   },
   "devDependencies": {
-    "nodemon": "^3.1.7"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "eslint": "^9.36.0",
+    "@eslint/js": "^9.36.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@next/bundle-analyzer": "^15.5.3"
   }
 }
