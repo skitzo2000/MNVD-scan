@@ -8,6 +8,15 @@ yarn-error.log*
 build/
 dist/
 
+# Next.js build output
+.next/
+out/
+
+# Next.js cache
+.next/cache/
+.next/static/
+.next/standalone/
+
 # Environment files
 .env
 .env.local
