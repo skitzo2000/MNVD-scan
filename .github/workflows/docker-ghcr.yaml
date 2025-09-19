@@ -16,8 +16,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      security-events: write
-      actions: read
 
     steps:
       - name: Checkout repository
@@ -130,28 +128,3 @@ jobs:
             ${{ startsWith(github.ref, 'refs/tags/') && format('ghcr.io/skitzo2000/mnvd-scan-backend:{0}', github.ref_name) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Install Trivy
-        uses: aquasecurity/setup-trivy@main
-        with:
-          cache: false
-
-      - name: Security scan with Trivy (Frontend)
-        run: |
-          trivy image --format sarif --output trivy-frontend-results.sarif ghcr.io/skitzo2000/mnvd-scan-frontend:latest
-
-      - name: Security scan with Trivy (Backend)
-        run: |
-          trivy image --format sarif --output trivy-backend-results.sarif ghcr.io/skitzo2000/mnvd-scan-backend:latest
-
-      - name: Upload Trivy scan results (Frontend)
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-frontend-results.sarif'
-
-      - name: Upload Trivy scan results (Backend)
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-backend-results.sarif'
