@@ -261,7 +261,7 @@ The application features an advanced Scan Access Layer for managing vulnerabilit
 - **Custom Scan Types**: Version checks, configuration audits, dependency scanning
 - **Scheduling Support**: Schedule scans for automated execution
 - **Advanced Workflows**: Multi-step processes combining different scan types
-
+- 
 ### Key Components
 - **Backend**: Node.js 22 with Express.js API
 - **Frontend**: Next.js 15 with React 19 and Material-UI 7
