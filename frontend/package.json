@@ -11,14 +11,14 @@
   },
   "proxy": "http://backend:3000",
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-scripts": "5.0.1",
-    "@mui/material": "^5.14.0",
-    "@mui/icons-material": "^5.14.0",
-    "@emotion/react": "^11.11.0",
-    "@emotion/styled": "^11.11.0",
-    "axios": "^1.5.0"
+    "@mui/material": "^7.3.2",
+    "@mui/icons-material": "^7.3.2",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "axios": "^1.12.2"
   },
   "browserslist": {
     "production": [

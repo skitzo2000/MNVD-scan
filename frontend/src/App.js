@@ -575,7 +575,13 @@ function App() {
       )}
 
       {/* Create Query Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+      <Dialog 
+        open={openDialog} 
+        onClose={handleCloseDialog} 
+        maxWidth="sm" 
+        fullWidth
+        disableScrollLock={true}
+      >
         <DialogTitle>Add New Vulnerability Query</DialogTitle>
         <DialogContent>
           <TextField
@@ -628,7 +634,13 @@ function App() {
       </Dialog>
 
       {/* CVE Details Dialog */}
-      <Dialog open={openCVEDialog} onClose={handleCloseCVEDialog} maxWidth="md" fullWidth>
+      <Dialog 
+        open={openCVEDialog} 
+        onClose={handleCloseCVEDialog} 
+        maxWidth="md" 
+        fullWidth
+        disableScrollLock={true}
+      >
         <DialogTitle>
           CVE Details for {selectedQuery?.name || `Query ${selectedQuery?.id}`}
         </DialogTitle>
