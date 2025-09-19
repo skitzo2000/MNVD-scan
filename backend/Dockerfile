@@ -1,14 +1,5 @@
 # Backend Dockerfile for NVD Scanner
-FROM node:18-slim AS base
-
-# Install dependencies for native modules and SQLite
-RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    g++ \
-    sqlite3 \
-    libsqlite3-dev \
-    && rm -rf /var/lib/apt/lists/*
+FROM node:22-slim AS base
 
 WORKDIR /app
 
@@ -19,12 +10,12 @@ COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
 # Verify critical dependencies are installed
-RUN node -e "require('dotenv'); require('express'); require('sqlite3'); require('axios'); require('cors'); require('helmet'); console.log('All critical dependencies found')"
+RUN node -e "require('dotenv'); require('express'); require('axios'); require('cors'); require('helmet'); console.log('All critical dependencies found')"
 
 # Copy backend source code
 COPY . .
 
-# Create data directory for SQLite database and ensure node user owns it
+# Create data directory for JSON file storage and ensure node user owns it
 RUN mkdir -p /app/data && \
     chown -R node:node /app && \
     chmod -R 755 /app

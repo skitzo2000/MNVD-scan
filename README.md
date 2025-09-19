@@ -8,15 +8,17 @@ A Node.js application that monitors the National Vulnerability Database (NVD) fo
 
 - 🛡️ **Automated Vulnerability Monitoring**: Regularly scans NVD for vulnerabilities matching your CPE queries
 - 📢 **Centralized Discord Notifications**: All notifications sent to a single configured Discord webhook
-- 🌐 **Web Interface**: Simple web frontend for managing vulnerability queries
+- 🌐 **Web Interface**: Modern Next.js frontend for managing vulnerability queries
 - 🔄 **Idempotency**: Avoids sending duplicate notifications for the same vulnerability
 - 🐳 **Docker Support**: Easy deployment with Docker and Docker Compose
 - 📊 **Statistics Dashboard**: View processed vulnerabilities and query statistics
 - 🎯 **Simplified Architecture**: One webhook per Docker container for predictable deployment
+- 💾 **JSON File Storage**: Lightweight, portable data storage with no database dependencies
+- 🧪 **Comprehensive Testing**: Full test suite for API and frontend integration
 
 ## Prerequisites
 
-- Node.js 18+ (for local development)
+- Node.js 22+ (for local development)
 - Docker and Docker Compose (for containerized deployment)
 - NVD API Key (get one from [NVD Developers](https://nvd.nist.gov/developers/request-an-api-key))
 - Discord Webhook URL
@@ -45,8 +47,8 @@ A Node.js application that monitors the National Vulnerability Database (NVD) fo
    ```
 
 5. **Access the web interface**
-   - Frontend: http://localhost:80
-   - Backend API: http://localhost:3000
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:3001
 
 ## Production Deployment
 
@@ -74,8 +76,8 @@ For production deployment using pre-built images from GHCR:
    ```
 
 4. **Access the application**
-   - Frontend: http://localhost
-   - Backend API: http://localhost/api
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:3001
 
 ## Manual Installation
 
@@ -154,7 +156,7 @@ If you need notifications sent to multiple Discord channels:
 | `NVD_API_KEY` | Your NVD API key | Yes |
 | `DISCORD_WEBHOOK_URL` | Default Discord webhook URL | No (can be set per query) |
 | `PORT` | Server port (default: 3000) | No |
-| `DB_PATH` | SQLite database path | No |
+| `DATA_DIR` | JSON file storage directory (default: ./data) | No |
 
 ## Security Best Practices
 
@@ -189,27 +191,54 @@ docker-compose logs nvd-scanner
 nvd-scanner/
 ├── backend/                 # Node.js backend
 │   ├── server.js           # Main server file
-│   ├── database.js         # SQLite database operations
+│   ├── database.js         # Database operations (DAL interface)
+│   ├── dal/                # Data Access Layer
+│   │   └── index.js        # JSON file storage implementation
 │   ├── nvd-client.js       # NVD API client
 │   ├── discord-notifier.js # Discord notification handler
-│   └── scanner.js          # Scanning orchestration
-├── frontend/               # React frontend
-│   ├── src/
-│   │   ├── App.js         # Main React component
-│   │   └── index.js       # React entry point
-│   └── public/
-├── docker/                 # Docker configuration
-│   └── Dockerfile
+│   └── scanner.js        # Scanning orchestration
+├── frontend/               # Next.js frontend
+│   ├── components/         # React components
+│   ├── pages/             # Next.js pages and API routes
+│   ├── lib/               # Utility libraries
+│   └── src/               # Main App component
+├── data/                   # JSON file storage
+│   ├── queries.json       # Vulnerability queries
+│   ├── cves.json          # CVE data
+│   ├── scans.json         # Scan history
+│   └── notifications.json # Notification history
+├── tests/                  # Test suites
+│   ├── test-api.sh        # API endpoint tests
+│   ├── test-frontend.sh   # Frontend integration tests
+│   └── run-all-tests.sh   # Complete test suite
 ├── docker-compose.yml      # Docker Compose setup
 └── README.md
 ```
 
+## Architecture
+
+### Data Access Layer (DAL)
+The application uses a modern Data Access Layer pattern with JSON file storage:
+- **No Database Dependencies**: Uses lightweight JSON files for data persistence
+- **Portable Storage**: Easy to backup, migrate, and version control
+- **Fast Performance**: Direct file I/O with no database overhead
+- **Simple Maintenance**: No database administration or migration scripts needed
+
+### Key Components
+- **Backend**: Node.js 22 with Express.js API
+- **Frontend**: Next.js 15 with React 19 and Material-UI 7
+- **Storage**: JSON file-based Data Access Layer
+- **Testing**: Comprehensive test suite with API and integration tests
+- **Containerization**: Docker with multi-stage builds and rootless support
+
 ### Adding New Features
 
 1. Backend features go in the `backend/` directory
-2. Frontend components go in `frontend/src/components/`
-3. Update the Dockerfile if you add new dependencies
-4. Test with Docker Compose before deploying
+2. Frontend components go in `frontend/components/`
+3. Data operations go through the DAL in `backend/dal/`
+4. Update the Dockerfile if you add new dependencies
+5. Test with Docker Compose before deploying
+6. Run the test suite to ensure compatibility
 
 ## License
 

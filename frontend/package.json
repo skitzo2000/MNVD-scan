@@ -2,34 +2,38 @@
   "name": "nvd-scanner-frontend",
   "version": "1.0.0",
   "description": "Frontend for NVD Scanner",
-  "main": "src/index.js",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "type-check": "tsc --noEmit",
+    "analyze": "ANALYZE=true next build",
+    "build:production": "NODE_ENV=production next build",
+    "clean": "rm -rf .next out node_modules/.cache"
   },
-  "proxy": "http://backend:3000",
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-scripts": "5.0.1",
+    "next": "^15.5.3",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
     "@mui/material": "^7.3.2",
     "@mui/icons-material": "^7.3.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "axios": "^1.12.2"
+    "@emotion/cache": "^11.14.0",
+    "axios": "^1.7.9",
+    "swr": "^2.2.4"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "devDependencies": {
+    "eslint": "^9.36.0",
+    "@eslint/js": "^9.36.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@next/bundle-analyzer": "^15.5.3"
   }
 }
