@@ -45,7 +45,6 @@ jobs:
         run: |
           cd frontend
           npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0
-
       - name: Build Next.js frontend
         run: |
           cd frontend
