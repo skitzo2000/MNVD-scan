@@ -7,8 +7,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "lint:fix": "next lint --fix",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "type-check": "tsc --noEmit",
     "analyze": "ANALYZE=true next build",
     "build:production": "NODE_ENV=production next build",
@@ -28,7 +28,6 @@
   },
   "devDependencies": {
     "eslint": "^9.36.0",
-    "eslint-config-next": "^15.5.3",
     "@next/bundle-analyzer": "^15.5.3"
   }
 }
