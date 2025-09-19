@@ -1,6 +1,6 @@
 const { initializeDatabase, isCVEProcessed, markCVEProcessed, logScan, getAllQueries } = require('./database');
 const nvdClient = require('./nvd-client');
-const discordNotifier = require('./discord-notifier');
+const ScanAccessLayer = require('./sal');
 
 // Scan configuration
 const SCAN_BATCH_SIZE = 5; // Process 5 queries at a time
@@ -13,6 +13,10 @@ async function runScan(db) {
   if (!db) {
     throw new Error('Database connection is required');
   }
+
+  // Initialize SAL
+  const sal = new ScanAccessLayer('./data');
+  await sal.initialize();
 
   try {
     // Get all active queries
@@ -31,7 +35,7 @@ async function runScan(db) {
       console.log(`Processing batch ${Math.floor(i / SCAN_BATCH_SIZE) + 1} of ${Math.ceil(queries.length / SCAN_BATCH_SIZE)}`);
 
       // Process each query in the batch
-      const batchPromises = batch.map(query => processQuery(db, query));
+      const batchPromises = batch.map(query => processQuery(db, query, sal));
       await Promise.allSettled(batchPromises);
 
       // Wait between batches
@@ -55,15 +59,8 @@ async function runScan(db) {
 }
 
 // Process a single query
-async function processQuery(db, query) {
+async function processQuery(db, query, sal) {
   const { id, cpe_id, name } = query;
-
-  // Get central Discord webhook from environment (optional for development)
-  const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
-
-  if (!discordWebhookUrl) {
-    console.log(`Warning: DISCORD_WEBHOOK_URL not set, will scan but skip notifications for ${cpe_id}`);
-  }
 
   try {
     console.log(`Processing query: ${name || cpe_id}`);
@@ -111,31 +108,41 @@ async function processQuery(db, query) {
 
     console.log(`${newVulnerabilities.length} new vulnerabilities to process for ${cpe_id}`);
 
-    // Send Discord notifications (if configured)
+    // Create and execute scan using SAL
     let notificationSuccess = true;
 
-    if (discordWebhookUrl && newVulnerabilities.length > 0) {
-      if (newVulnerabilities.length === 1) {
-        // Single notification
-        notificationSuccess = await discordNotifier.sendNotification(
-          discordWebhookUrl,
-          newVulnerabilities[0]
-        );
-      } else {
-        // Batch notification
-        notificationSuccess = await discordNotifier.sendBatchNotification(
-          discordWebhookUrl,
-          newVulnerabilities,
-          cpe_id
-        );
+    if (newVulnerabilities.length > 0) {
+      try {
+        // Create a scan using SAL
+        const scanData = {
+          type: 'nvd',
+          cpeId: cpe_id,
+          name: `NVD scan for ${name || cpe_id}`,
+          description: `Automated NVD vulnerability scan`,
+          config: {
+            daysBack: 30
+          }
+        };
+
+        const scan = await sal.createScan(scanData);
+        const scanResult = await sal.executeScan(scan.id);
+
+        notificationSuccess = scanResult.results.notifications.some(n => n.success);
+        
+        if (notificationSuccess) {
+          console.log(`SAL scan completed successfully for ${cpe_id}`);
+        } else {
+          console.log(`SAL scan completed but notifications failed for ${cpe_id}`);
+        }
+      } catch (error) {
+        console.error(`Failed to execute SAL scan for ${cpe_id}:`, error.message);
+        notificationSuccess = false;
       }
       
       if (!notificationSuccess) {
-        console.error(`Failed to send Discord notification for ${cpe_id}`);
-        await logScan(db, id, cpe_id, 'warning', 'Scan successful but Discord notification failed');
+        console.error(`Failed to send notifications for ${cpe_id}`);
+        await logScan(db, id, cpe_id, 'warning', 'Scan successful but notifications failed');
       }
-    } else if (newVulnerabilities.length > 0) {
-      console.log(`Would send Discord notification for ${newVulnerabilities.length} vulnerabilities (webhook not configured)`);
     }
 
     // Always mark CVEs as processed regardless of notification status
@@ -175,12 +182,9 @@ async function scanSpecificCPE(cpeId, db) {
     throw new Error('Database connection is required');
   }
 
-  // Get central Discord webhook from environment
-  const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
-
-  if (!discordWebhookUrl) {
-    throw new Error('DISCORD_WEBHOOK_URL environment variable not set');
-  }
+  // Initialize SAL
+  const sal = new ScanAccessLayer('./data');
+  await sal.initialize();
 
   try {
     if (!nvdClient.isValidCPE(cpeId)) {
@@ -203,10 +207,21 @@ async function scanSpecificCPE(cpeId, db) {
     }
 
     if (newVulnerabilities.length > 0) {
-      // Send notification
-      const success = newVulnerabilities.length === 1
-        ? await discordNotifier.sendNotification(discordWebhookUrl, newVulnerabilities[0])
-        : await discordNotifier.sendBatchNotification(discordWebhookUrl, newVulnerabilities, cpeId);
+      // Create and execute scan using SAL
+      const scanData = {
+        type: 'nvd',
+        cpeId: cpeId,
+        name: `Manual NVD scan for ${cpeId}`,
+        description: `Manual NVD vulnerability scan`,
+        config: {
+          daysBack: 7
+        }
+      };
+
+      const scan = await sal.createScan(scanData);
+      const scanResult = await sal.executeScan(scan.id);
+
+      const success = scanResult.results.notifications.some(n => n.success);
 
       if (success) {
         // Mark as processed

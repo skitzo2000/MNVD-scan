@@ -7,7 +7,7 @@ A Node.js application that monitors the National Vulnerability Database (NVD) fo
 ## Features
 
 - 🛡️ **Automated Vulnerability Monitoring**: Regularly scans NVD for vulnerabilities matching your CPE queries
-- 📢 **Centralized Discord Notifications**: All notifications sent to a single configured Discord webhook
+- 📢 **Multi-Platform Notifications**: Supports Discord and Microsoft Teams webhooks
 - 🌐 **Web Interface**: Modern Next.js frontend for managing vulnerability queries
 - 🔄 **Idempotency**: Avoids sending duplicate notifications for the same vulnerability
 - 🐳 **Docker Support**: Easy deployment with Docker and Docker Compose
@@ -15,6 +15,15 @@ A Node.js application that monitors the National Vulnerability Database (NVD) fo
 - 🎯 **Simplified Architecture**: One webhook per Docker container for predictable deployment
 - 💾 **JSON File Storage**: Lightweight, portable data storage with no database dependencies
 - 🧪 **Comprehensive Testing**: Full test suite for API and frontend integration
+
+## Roadmap / Wishlist
+
+- 🏷️ **Query Categories**: Organize queries into categories (e.g., "Critical Systems", "Development", "Production") with category-specific webhooks
+- 📱 **Mobile App**: Native mobile application for monitoring vulnerabilities on the go
+- 🔔 **Advanced Notifications**: Email notifications, SMS alerts, and custom notification channels
+- 📈 **Analytics Dashboard**: Advanced reporting and trend analysis for vulnerability data
+- 🔍 **Smart Filtering**: AI-powered vulnerability filtering and prioritization
+- 🌍 **Multi-Region Support**: Deploy across multiple regions for high availability
 
 ## Prerequisites
 
@@ -39,6 +48,7 @@ A Node.js application that monitors the National Vulnerability Database (NVD) fo
    ```env
    NVD_API_KEY=your_nvd_api_key_here
    DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/your_webhook_id/your_webhook_token
+   TEAMS_WEBHOOK_URL=https://your-org.webhook.office.com/webhookb2/your_webhook_id/IncomingWebhook/your_webhook_token
    ```
 
 4. **Build and run with Docker Compose (Development)**
@@ -154,7 +164,8 @@ If you need notifications sent to multiple Discord channels:
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `NVD_API_KEY` | Your NVD API key | Yes |
-| `DISCORD_WEBHOOK_URL` | Default Discord webhook URL | No (can be set per query) |
+| `DISCORD_WEBHOOK_URL` | Discord webhook URL | No (can be set per query) |
+| `TEAMS_WEBHOOK_URL` | Microsoft Teams webhook URL | No (can be set per query) |
 | `PORT` | Server port (default: 3000) | No |
 | `DATA_DIR` | JSON file storage directory (default: ./data) | No |
 
@@ -194,9 +205,14 @@ nvd-scanner/
 │   ├── database.js         # Database operations (DAL interface)
 │   ├── dal/                # Data Access Layer
 │   │   └── index.js        # JSON file storage implementation
+│   ├── nal/                # Notification Access Layer
+│   │   └── index.js        # Webhook management implementation
+│   ├── sal/                # Scan Access Layer
+│   │   └── index.js        # Scan and workflow management
+│   ├── notification-service.js # Multi-platform notification service
 │   ├── nvd-client.js       # NVD API client
-│   ├── discord-notifier.js # Discord notification handler
-│   └── scanner.js        # Scanning orchestration
+│   ├── discord-notifier.js # Legacy Discord notification handler
+│   └── scanner.js         # Scanning orchestration
 ├── frontend/               # Next.js frontend
 │   ├── components/         # React components
 │   ├── pages/             # Next.js pages and API routes
@@ -205,11 +221,16 @@ nvd-scanner/
 ├── data/                   # JSON file storage
 │   ├── queries.json       # Vulnerability queries
 │   ├── cves.json          # CVE data
-│   ├── scans.json         # Scan history
-│   └── notifications.json # Notification history
+│   ├── scans.json         # Scan history and statistics
+│   ├── workflows.json     # Workflow definitions and templates
+│   ├── notifications.json # Notification history
+│   └── webhooks.json      # Webhook configuration
 ├── tests/                  # Test suites
 │   ├── test-api.sh        # API endpoint tests
 │   ├── test-frontend.sh   # Frontend integration tests
+│   ├── test-nal.js        # NAL functionality tests
+│   ├── test-sal.js        # SAL functionality tests
+│   ├── test-webhooks.js   # Webhook compatibility tests
 │   └── run-all-tests.sh   # Complete test suite
 ├── docker-compose.yml      # Docker Compose setup
 └── README.md
@@ -224,10 +245,28 @@ The application uses a modern Data Access Layer pattern with JSON file storage:
 - **Fast Performance**: Direct file I/O with no database overhead
 - **Simple Maintenance**: No database administration or migration scripts needed
 
+### Notification Access Layer (NAL)
+The application includes a comprehensive Notification Access Layer for managing webhooks:
+- **Multi-Platform Support**: Discord and Microsoft Teams webhook integration
+- **Category Management**: Organize webhooks by categories (Critical Systems, Development, Production)
+- **Flexible Routing**: Send notifications to specific webhooks or entire categories
+- **Comprehensive Logging**: Track notification success/failure rates and statistics
+- **Platform Detection**: Automatic detection of webhook types (Discord vs Teams)
+
+### Scan Access Layer (SAL)
+The application features an advanced Scan Access Layer for managing vulnerability scans:
+- **Multiple Scan Types**: NVD scans, custom scans, and workflow-based scans
+- **Workflow Management**: Create complex multi-step security assessment workflows
+- **Template System**: Pre-built workflow templates for common security tasks
+- **Custom Scan Types**: Version checks, configuration audits, dependency scanning
+- **Scheduling Support**: Schedule scans for automated execution
+- **Advanced Workflows**: Multi-step processes combining different scan types
+
 ### Key Components
 - **Backend**: Node.js 22 with Express.js API
 - **Frontend**: Next.js 15 with React 19 and Material-UI 7
 - **Storage**: JSON file-based Data Access Layer
+- **Notifications**: Multi-platform webhook management with NAL
 - **Testing**: Comprehensive test suite with API and integration tests
 - **Containerization**: Docker with multi-stage builds and rootless support
 
