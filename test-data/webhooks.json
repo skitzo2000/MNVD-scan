@@ -1,0 +1,126 @@
+{
+  "webhooks": [
+    {
+      "id": "1758313927097",
+      "name": "Test Discord Webhook",
+      "url": "https://discord.com/api/webhooks/123456789/abcdef123456",
+      "platform": "discord",
+      "category": "critical-systems",
+      "description": "Test Discord webhook for critical systems",
+      "createdAt": "2025-09-19T20:32:07.097Z",
+      "isActive": true
+    },
+    {
+      "id": "1758313932676",
+      "name": "Test Discord Webhook",
+      "url": "https://discord.com/api/webhooks/123456789/abcdef123456",
+      "platform": "discord",
+      "category": "critical-systems",
+      "description": "Test Discord webhook for critical systems",
+      "createdAt": "2025-09-19T20:32:12.676Z",
+      "isActive": true
+    },
+    {
+      "id": "1758313949512",
+      "name": "Test Teams Webhook",
+      "url": "https://your-org.webhook.office.com/webhookb2/12345678-1234-1234-1234-123456789012/IncomingWebhook/abcdef123456/12345678-1234-1234-1234-123456789012",
+      "platform": "teams",
+      "category": "development",
+      "description": "Test Teams webhook for development",
+      "createdAt": "2025-09-19T20:32:29.512Z",
+      "isActive": true
+    },
+    {
+      "id": "1758314671620",
+      "name": "Test Discord Webhook",
+      "url": "https://discord.com/api/webhooks/123456789/abcdef123456",
+      "platform": "discord",
+      "category": "critical-systems",
+      "description": "Test Discord webhook for critical systems",
+      "createdAt": "2025-09-19T20:44:31.620Z",
+      "isActive": true
+    },
+    {
+      "id": "1758314671621",
+      "name": "Test Teams Webhook",
+      "url": "https://your-org.webhook.office.com/webhookb2/12345678-1234-1234-1234-123456789012/IncomingWebhook/abcdef123456/12345678-1234-1234-1234-123456789012",
+      "platform": "teams",
+      "category": "development",
+      "description": "Test Teams webhook for development",
+      "createdAt": "2025-09-19T20:44:31.621Z",
+      "isActive": true
+    },
+    {
+      "id": "1758314683555",
+      "name": "Test Discord Webhook",
+      "url": "https://discord.com/api/webhooks/123456789/abcdef123456",
+      "platform": "discord",
+      "category": "critical-systems",
+      "description": "Test Discord webhook for critical systems",
+      "createdAt": "2025-09-19T20:44:43.555Z",
+      "isActive": true
+    },
+    {
+      "id": "1758314683556",
+      "name": "Test Teams Webhook",
+      "url": "https://your-org.webhook.office.com/webhookb2/12345678-1234-1234-1234-123456789012/IncomingWebhook/abcdef123456/12345678-1234-1234-1234-123456789012",
+      "platform": "teams",
+      "category": "development",
+      "description": "Test Teams webhook for development",
+      "createdAt": "2025-09-19T20:44:43.556Z",
+      "isActive": true
+    },
+    {
+      "id": "1758314697370",
+      "name": "Test Discord Webhook",
+      "url": "https://discord.com/api/webhooks/123456789/abcdef123456",
+      "platform": "discord",
+      "category": "critical-systems",
+      "description": "Test Discord webhook for critical systems",
+      "createdAt": "2025-09-19T20:44:57.370Z",
+      "isActive": true
+    },
+    {
+      "id": "1758314697371",
+      "name": "Test Teams Webhook",
+      "url": "https://your-org.webhook.office.com/webhookb2/12345678-1234-1234-1234-123456789012/IncomingWebhook/abcdef123456/12345678-1234-1234-1234-123456789012",
+      "platform": "teams",
+      "category": "development",
+      "description": "Test Teams webhook for development",
+      "createdAt": "2025-09-19T20:44:57.371Z",
+      "isActive": true
+    },
+    {
+      "id": "1758314713113",
+      "name": "Test Teams Webhook",
+      "url": "https://your-org.webhook.office.com/webhookb2/12345678-1234-1234-1234-123456789012/IncomingWebhook/abcdef123456/12345678-1234-1234-1234-123456789012",
+      "platform": "teams",
+      "category": "development",
+      "description": "Test Teams webhook for development",
+      "createdAt": "2025-09-19T20:45:13.113Z",
+      "isActive": true
+    }
+  ],
+  "categories": {
+    "critical-systems": {
+      "name": "Critical Systems",
+      "description": "High-priority systems requiring immediate attention",
+      "webhookUrls": []
+    },
+    "development": {
+      "name": "Development",
+      "description": "Development environment notifications",
+      "webhookUrls": []
+    },
+    "production": {
+      "name": "Production",
+      "description": "Production environment notifications",
+      "webhookUrls": []
+    },
+    "security-team": {
+      "name": "Security Team",
+      "description": "Notifications for the security team",
+      "webhookUrls": []
+    }
+  }
+}

@@ -1,0 +1,226 @@
+{
+  "workflows": [
+    {
+      "id": "1758314227618",
+      "name": "Test Security Workflow",
+      "description": "Test workflow for SAL functionality",
+      "steps": [
+        {
+          "type": "nvd_scan",
+          "name": "NVD Vulnerability Scan",
+          "config": {
+            "cpeId": "{{cpeId}}",
+            "daysBack": 30
+          }
+        },
+        {
+          "type": "custom_scan",
+          "name": "Custom Security Checks",
+          "config": {
+            "checks": [
+              "version_check",
+              "config_audit"
+            ]
+          }
+        },
+        {
+          "type": "notification",
+          "name": "Send Notifications",
+          "config": {
+            "categories": [
+              "critical-systems"
+            ]
+          }
+        }
+      ],
+      "createdAt": "2025-09-19T20:37:07.618Z",
+      "isActive": true
+    },
+    {
+      "id": "1758314227622",
+      "name": "Comprehensive Security Assessment",
+      "description": "Multi-step security assessment workflow",
+      "steps": [
+        {
+          "type": "nvd_scan",
+          "name": "NVD Vulnerability Assessment",
+          "config": {
+            "cpeId": "{{cpeId}}",
+            "daysBack": 30
+          }
+        },
+        {
+          "type": "custom_scan",
+          "name": "Configuration Audit",
+          "config": {
+            "checks": [
+              "config_audit",
+              "version_check"
+            ]
+          }
+        },
+        {
+          "type": "custom_scan",
+          "name": "Dependency Analysis",
+          "config": {
+            "checks": [
+              "dependency_scan"
+            ]
+          }
+        },
+        {
+          "type": "notification",
+          "name": "Security Team Alert",
+          "config": {
+            "categories": [
+              "security-team",
+              "critical-systems"
+            ]
+          }
+        }
+      ],
+      "createdAt": "2025-09-19T20:37:07.622Z",
+      "isActive": true
+    },
+    {
+      "id": "1758314669858",
+      "name": "Test Security Workflow",
+      "description": "Test workflow for SAL functionality",
+      "steps": [
+        {
+          "type": "nvd_scan",
+          "name": "NVD Vulnerability Scan",
+          "config": {
+            "cpeId": "{{cpeId}}",
+            "daysBack": 30
+          }
+        },
+        {
+          "type": "custom_scan",
+          "name": "Custom Security Checks",
+          "config": {
+            "checks": [
+              "version_check",
+              "config_audit"
+            ]
+          }
+        },
+        {
+          "type": "notification",
+          "name": "Send Notifications",
+          "config": {
+            "categories": [
+              "critical-systems"
+            ]
+          }
+        }
+      ],
+      "createdAt": "2025-09-19T20:44:29.858Z",
+      "isActive": true
+    },
+    {
+      "id": "1758314669861",
+      "name": "Comprehensive Security Assessment",
+      "description": "Multi-step security assessment workflow",
+      "steps": [
+        {
+          "type": "nvd_scan",
+          "name": "NVD Vulnerability Assessment",
+          "config": {
+            "cpeId": "{{cpeId}}",
+            "daysBack": 30
+          }
+        },
+        {
+          "type": "custom_scan",
+          "name": "Configuration Audit",
+          "config": {
+            "checks": [
+              "config_audit",
+              "version_check"
+            ]
+          }
+        },
+        {
+          "type": "custom_scan",
+          "name": "Dependency Analysis",
+          "config": {
+            "checks": [
+              "dependency_scan"
+            ]
+          }
+        },
+        {
+          "type": "notification",
+          "name": "Security Team Alert",
+          "config": {
+            "categories": [
+              "security-team",
+              "critical-systems"
+            ]
+          }
+        }
+      ],
+      "createdAt": "2025-09-19T20:44:29.861Z",
+      "isActive": true
+    }
+  ],
+  "templates": {
+    "nvd-scan": {
+      "name": "NVD Vulnerability Scan",
+      "description": "Standard NVD vulnerability scanning workflow",
+      "steps": [
+        {
+          "type": "nvd_scan",
+          "name": "Scan NVD for vulnerabilities",
+          "config": {
+            "cpeId": "{{cpeId}}",
+            "daysBack": 30
+          }
+        },
+        {
+          "type": "notification",
+          "name": "Send notifications",
+          "config": {
+            "categories": [
+              "critical-systems"
+            ]
+          }
+        }
+      ]
+    },
+    "comprehensive-scan": {
+      "name": "Comprehensive Security Scan",
+      "description": "Multi-source vulnerability scanning workflow",
+      "steps": [
+        {
+          "type": "nvd_scan",
+          "name": "NVD vulnerability scan",
+          "config": {
+            "cpeId": "{{cpeId}}",
+            "daysBack": 30
+          }
+        },
+        {
+          "type": "custom_scan",
+          "name": "Custom security checks",
+          "config": {
+            "checks": [
+              "version_check",
+              "config_audit"
+            ]
+          }
+        },
+        {
+          "type": "notification",
+          "name": "Send to security team",
+          "config": {
+            "categories": [
+              "security-team"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

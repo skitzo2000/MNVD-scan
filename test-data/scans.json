@@ -1,0 +1,225 @@
+{
+  "scans": [
+    {
+      "id": "1758314226580",
+      "type": "nvd",
+      "cpeId": "cpe:2.3:a:apache:httpd:2.4:*:*:*:*:*:*:*",
+      "workflowId": null,
+      "name": "Test NVD Scan",
+      "description": "Test scan for SAL functionality",
+      "status": "completed",
+      "createdAt": "2025-09-19T20:37:06.580Z",
+      "startedAt": "2025-09-19T20:37:06.581Z",
+      "completedAt": "2025-09-19T20:37:07.614Z",
+      "results": {
+        "vulnerabilities": [],
+        "notifications": [],
+        "errors": []
+      },
+      "config": {
+        "daysBack": 30
+      }
+    },
+    {
+      "id": "1758314227619",
+      "type": "workflow",
+      "cpeId": "cpe:2.3:a:apache:httpd:2.4:*:*:*:*:*:*:*",
+      "workflowId": null,
+      "name": "NVD Vulnerability Scan for cpe:2.3:a:apache:httpd:2.4:*:*:*:*:*:*:*",
+      "description": "Standard NVD vulnerability scanning workflow",
+      "status": "completed",
+      "createdAt": "2025-09-19T20:37:07.619Z",
+      "startedAt": "2025-09-19T20:37:07.619Z",
+      "completedAt": "2025-09-19T20:37:07.621Z",
+      "results": {
+        "vulnerabilities": [],
+        "notifications": [],
+        "errors": [
+          "Workflow not found"
+        ]
+      },
+      "config": {
+        "templateId": "nvd-scan",
+        "daysBack": 7
+      }
+    },
+    {
+      "id": "1758314227619",
+      "type": "custom",
+      "cpeId": "cpe:2.3:a:apache:httpd:2.4:*:*:*:*:*:*:*",
+      "workflowId": null,
+      "name": "Test Custom Scan",
+      "description": "Test custom scan functionality",
+      "status": "pending",
+      "createdAt": "2025-09-19T20:37:07.619Z",
+      "startedAt": null,
+      "completedAt": null,
+      "results": {
+        "vulnerabilities": [],
+        "errors": [],
+        "notifications": []
+      },
+      "config": {
+        "checks": [
+          "version_check",
+          "config_audit",
+          "dependency_scan"
+        ]
+      }
+    },
+    {
+      "id": "1758314227621",
+      "type": "nvd",
+      "cpeId": "cpe:2.3:a:apache:httpd:2.4:*:*:*:*:*:*:*",
+      "workflowId": null,
+      "name": "Scheduled Test Scan",
+      "description": "Test scan for scheduling functionality",
+      "status": "pending",
+      "createdAt": "2025-09-19T20:37:07.621Z",
+      "startedAt": null,
+      "completedAt": null,
+      "results": {
+        "vulnerabilities": [],
+        "errors": [],
+        "notifications": []
+      },
+      "config": {}
+    },
+    {
+      "id": "1758314227622",
+      "type": "workflow",
+      "cpeId": "cpe:2.3:a:apache:httpd:2.4:*:*:*:*:*:*:*",
+      "workflowId": "1758314227622",
+      "name": "Comprehensive Security Scan",
+      "description": "Full security assessment",
+      "status": "pending",
+      "createdAt": "2025-09-19T20:37:07.622Z",
+      "startedAt": null,
+      "completedAt": null,
+      "results": {
+        "vulnerabilities": [],
+        "errors": [],
+        "notifications": []
+      },
+      "config": {}
+    },
+    {
+      "id": "1758314668794",
+      "type": "nvd",
+      "cpeId": "cpe:2.3:a:apache:httpd:2.4:*:*:*:*:*:*:*",
+      "workflowId": null,
+      "name": "Test NVD Scan",
+      "description": "Test scan for SAL functionality",
+      "status": "completed",
+      "createdAt": "2025-09-19T20:44:28.794Z",
+      "startedAt": "2025-09-19T20:44:28.795Z",
+      "completedAt": "2025-09-19T20:44:29.853Z",
+      "results": {
+        "vulnerabilities": [],
+        "notifications": [],
+        "errors": []
+      },
+      "config": {
+        "daysBack": 30
+      }
+    },
+    {
+      "id": "1758314669858",
+      "type": "workflow",
+      "cpeId": "cpe:2.3:a:apache:httpd:2.4:*:*:*:*:*:*:*",
+      "workflowId": null,
+      "name": "NVD Vulnerability Scan for cpe:2.3:a:apache:httpd:2.4:*:*:*:*:*:*:*",
+      "description": "Standard NVD vulnerability scanning workflow",
+      "status": "pending",
+      "createdAt": "2025-09-19T20:44:29.858Z",
+      "startedAt": null,
+      "completedAt": null,
+      "results": {
+        "vulnerabilities": [],
+        "errors": [],
+        "notifications": []
+      },
+      "config": {
+        "templateId": "nvd-scan",
+        "daysBack": 7
+      }
+    },
+    {
+      "id": "1758314669859",
+      "type": "custom",
+      "cpeId": "cpe:2.3:a:apache:httpd:2.4:*:*:*:*:*:*:*",
+      "workflowId": null,
+      "name": "Test Custom Scan",
+      "description": "Test custom scan functionality",
+      "status": "completed",
+      "createdAt": "2025-09-19T20:44:29.859Z",
+      "startedAt": "2025-09-19T20:44:29.859Z",
+      "completedAt": "2025-09-19T20:44:29.860Z",
+      "results": {
+        "vulnerabilities": [],
+        "notifications": [],
+        "errors": []
+      },
+      "config": {
+        "checks": [
+          "version_check",
+          "config_audit",
+          "dependency_scan"
+        ]
+      }
+    },
+    {
+      "id": "1758314669860",
+      "type": "nvd",
+      "cpeId": "cpe:2.3:a:apache:httpd:2.4:*:*:*:*:*:*:*",
+      "workflowId": null,
+      "name": "Scheduled Test Scan",
+      "description": "Test scan for scheduling functionality",
+      "status": "pending",
+      "createdAt": "2025-09-19T20:44:29.860Z",
+      "startedAt": null,
+      "completedAt": null,
+      "results": {
+        "vulnerabilities": [],
+        "errors": [],
+        "notifications": []
+      },
+      "config": {}
+    },
+    {
+      "id": "1758314669861",
+      "type": "workflow",
+      "cpeId": "cpe:2.3:a:apache:httpd:2.4:*:*:*:*:*:*:*",
+      "workflowId": "1758314669861",
+      "name": "Comprehensive Security Scan",
+      "description": "Full security assessment",
+      "status": "pending",
+      "createdAt": "2025-09-19T20:44:29.861Z",
+      "startedAt": null,
+      "completedAt": null,
+      "results": {
+        "vulnerabilities": [],
+        "errors": [],
+        "notifications": []
+      },
+      "config": {}
+    }
+  ],
+  "stats": {
+    "totalScans": 4,
+    "successfulScans": 4,
+    "failedScans": 0,
+    "byType": {
+      "nvd": 0,
+      "custom": 0,
+      "scheduled": 0,
+      "manual": 0
+    },
+    "byStatus": {
+      "completed": 4,
+      "running": 0,
+      "failed": 0,
+      "cancelled": 0
+    }
+  }
+}

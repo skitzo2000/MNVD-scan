@@ -1,0 +1,151 @@
+{
+  "notifications": [
+    {
+      "id": "1758313949835",
+      "webhookId": "1758313949512",
+      "webhookName": "Test Discord Webhook",
+      "webhookPlatform": "discord",
+      "cveId": "CVE-2024-12345",
+      "severity": "HIGH",
+      "success": false,
+      "timestamp": "2025-09-19T20:32:29.835Z"
+    },
+    {
+      "id": "1758313950070",
+      "webhookId": "1758313949512",
+      "webhookName": "Test Discord Webhook",
+      "webhookPlatform": "discord",
+      "type": "batch",
+      "cpeId": "cpe:2.3:a:apache:httpd:2.4:*:*:*:*:*:*:*",
+      "vulnerabilityCount": 2,
+      "success": false,
+      "timestamp": "2025-09-19T20:32:30.070Z"
+    },
+    {
+      "id": "1758313950289",
+      "webhookId": "1758313927097",
+      "webhookName": "Test Discord Webhook",
+      "webhookPlatform": "discord",
+      "cveId": "CVE-2024-12345",
+      "severity": "HIGH",
+      "success": false,
+      "timestamp": "2025-09-19T20:32:30.289Z"
+    },
+    {
+      "id": "1758313950478",
+      "webhookId": "1758313932676",
+      "webhookName": "Test Discord Webhook",
+      "webhookPlatform": "discord",
+      "cveId": "CVE-2024-12345",
+      "severity": "HIGH",
+      "success": false,
+      "timestamp": "2025-09-19T20:32:30.478Z"
+    },
+    {
+      "id": "1758313950697",
+      "webhookId": "1758313949512",
+      "webhookName": "Test Discord Webhook",
+      "webhookPlatform": "discord",
+      "cveId": "CVE-2024-12345",
+      "severity": "HIGH",
+      "success": false,
+      "timestamp": "2025-09-19T20:32:30.697Z"
+    },
+    {
+      "id": "1758314713369",
+      "webhookId": "1758314713113",
+      "webhookName": "Test Discord Webhook",
+      "webhookPlatform": "discord",
+      "cveId": "CVE-2024-12345",
+      "severity": "HIGH",
+      "success": false,
+      "timestamp": "2025-09-19T20:45:13.369Z"
+    },
+    {
+      "id": "1758314713571",
+      "webhookId": "1758314713113",
+      "webhookName": "Test Discord Webhook",
+      "webhookPlatform": "discord",
+      "type": "batch",
+      "cpeId": "cpe:2.3:a:apache:httpd:2.4:*:*:*:*:*:*:*",
+      "vulnerabilityCount": 2,
+      "success": false,
+      "timestamp": "2025-09-19T20:45:13.571Z"
+    },
+    {
+      "id": "1758314713780",
+      "webhookId": "1758313927097",
+      "webhookName": "Test Discord Webhook",
+      "webhookPlatform": "discord",
+      "cveId": "CVE-2024-12345",
+      "severity": "HIGH",
+      "success": false,
+      "timestamp": "2025-09-19T20:45:13.780Z"
+    },
+    {
+      "id": "1758314713994",
+      "webhookId": "1758313932676",
+      "webhookName": "Test Discord Webhook",
+      "webhookPlatform": "discord",
+      "cveId": "CVE-2024-12345",
+      "severity": "HIGH",
+      "success": false,
+      "timestamp": "2025-09-19T20:45:13.994Z"
+    },
+    {
+      "id": "1758314714209",
+      "webhookId": "1758314671620",
+      "webhookName": "Test Discord Webhook",
+      "webhookPlatform": "discord",
+      "cveId": "CVE-2024-12345",
+      "severity": "HIGH",
+      "success": false,
+      "timestamp": "2025-09-19T20:45:14.209Z"
+    },
+    {
+      "id": "1758314714398",
+      "webhookId": "1758314683555",
+      "webhookName": "Test Discord Webhook",
+      "webhookPlatform": "discord",
+      "cveId": "CVE-2024-12345",
+      "severity": "HIGH",
+      "success": false,
+      "timestamp": "2025-09-19T20:45:14.398Z"
+    },
+    {
+      "id": "1758314714678",
+      "webhookId": "1758314697370",
+      "webhookName": "Test Discord Webhook",
+      "webhookPlatform": "discord",
+      "cveId": "CVE-2024-12345",
+      "severity": "HIGH",
+      "success": false,
+      "timestamp": "2025-09-19T20:45:14.678Z"
+    },
+    {
+      "id": "1758314714872",
+      "webhookId": "1758314713113",
+      "webhookName": "Test Discord Webhook",
+      "webhookPlatform": "discord",
+      "cveId": "CVE-2024-12345",
+      "severity": "HIGH",
+      "success": false,
+      "timestamp": "2025-09-19T20:45:14.872Z"
+    }
+  ],
+  "stats": {
+    "totalSent": 13,
+    "totalFailed": 13,
+    "byPlatform": {
+      "discord": 0,
+      "teams": 0,
+      "unknown": 0
+    },
+    "bySeverity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    }
+  }
+}

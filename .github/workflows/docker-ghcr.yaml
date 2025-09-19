@@ -45,7 +45,6 @@ jobs:
         run: |
           cd frontend
           npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0
-
       - name: Build Next.js frontend
         run: |
           cd frontend
@@ -130,19 +129,18 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Security scan with Trivy (Frontend)
-        uses: aquasecurity/trivy-action@master
+      - name: Install Trivy
+        uses: aquasecurity/setup-trivy@main
         with:
-          image-ref: 'ghcr.io/skitzo2000/mnvd-scan-frontend:latest'
-          format: 'sarif'
-          output: 'trivy-frontend-results.sarif'
+          cache: false
+
+      - name: Security scan with Trivy (Frontend)
+        run: |
+          trivy image --format sarif --output trivy-frontend-results.sarif ghcr.io/skitzo2000/mnvd-scan-frontend:latest
 
       - name: Security scan with Trivy (Backend)
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'ghcr.io/skitzo2000/mnvd-scan-backend:latest'
-          format: 'sarif'
-          output: 'trivy-backend-results.sarif'
+        run: |
+          trivy image --format sarif --output trivy-backend-results.sarif ghcr.io/skitzo2000/mnvd-scan-backend:latest
 
       - name: Upload Trivy scan results (Frontend)
         uses: github/codeql-action/upload-sarif@v3
