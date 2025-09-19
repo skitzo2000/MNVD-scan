@@ -7,7 +7,7 @@ const path = require('path');
 // const cron = require('node-cron'); // Temporarily disabled for debugging
 
 // Import our modules
-const { initializeDatabase, getAllQueries, createQuery, deleteQuery, getScanStats, getRecentNotifications, getQueryCVEStats, getCVEsForQuery } = require('./database');
+const { initializeDatabase, getAllQueries, createQuery, deleteQuery, getStats, getRecentNotifications, getQueryCVEStats, getCVEsForQuery } = require('./database');
 const nvdClient = require('./nvd-client');
 const discordNotifier = require('./discord-notifier');
 const scanner = require('./scanner');
@@ -67,14 +67,10 @@ app.post('/api/queries', async (req, res) => {
       return res.status(500).json({ error: 'Database not initialized' });
     }
 
-    const queryId = await createQuery(dbInstance, cpe_id, name || null, description || null);
-
-    // Fetch the created query to return complete data
-    const createdQuery = await new Promise((resolve, reject) => {
-      dbInstance.get('SELECT * FROM queries WHERE id = ?', [queryId], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
+    const createdQuery = await createQuery(dbInstance, {
+      cpe_id,
+      name: name || null,
+      description: description || null
     });
 
     res.status(201).json(createdQuery);
@@ -156,11 +152,14 @@ app.get('/api/stats', async (req, res) => {
     if (!dbInstance) {
       return res.status(500).json({ error: 'Database not initialized' });
     }
-    const stats = await getScanStats(dbInstance);
+    const stats = await getStats(dbInstance);
     const recentNotifications = await getRecentNotifications(dbInstance);
     res.json({
       totalQueries: stats.totalQueries || 0,
-      processedCVEs: stats.processedCVEs || 0,
+      totalCVEs: stats.totalCVEs || 0,
+      totalScans: stats.totalScans || 0,
+      totalNotifications: stats.totalNotifications || 0,
+      lastScan: stats.lastScan,
       recentNotifications: recentNotifications || []
     });
   } catch (error) {
