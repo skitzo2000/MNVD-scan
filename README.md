@@ -25,7 +25,6 @@ A Node.js application that monitors the National Vulnerability Database (NVD) fo
 - 🔍 **Smart Filtering**: AI-powered vulnerability filtering and prioritization
 - 🌍 **Multi-Region Support**: Deploy across multiple regions for high availability
 
-
 ## Prerequisites
 
 - Node.js 22+ (for local development)
@@ -246,7 +245,6 @@ The application uses a modern Data Access Layer pattern with JSON file storage:
 - **Fast Performance**: Direct file I/O with no database overhead
 - **Simple Maintenance**: No database administration or migration scripts needed
 
-
 ### Notification Access Layer (NAL)
 The application includes a comprehensive Notification Access Layer for managing webhooks:
 - **Multi-Platform Support**: Discord and Microsoft Teams webhook integration
@@ -263,6 +261,12 @@ The application features an advanced Scan Access Layer for managing vulnerabilit
 - **Custom Scan Types**: Version checks, configuration audits, dependency scanning
 - **Scheduling Support**: Schedule scans for automated execution
 - **Advanced Workflows**: Multi-step processes combining different scan types
+- 
+### Key Components
+- **Backend**: Node.js 22 with Express.js API
+- **Frontend**: Next.js 15 with React 19 and Material-UI 7
+- **Storage**: JSON file-based Data Access Layer
+- **Notifications**: Multi-platform webhook management with NAL
 - **Testing**: Comprehensive test suite with API and integration tests
 - **Containerization**: Docker with multi-stage builds and rootless support
 
