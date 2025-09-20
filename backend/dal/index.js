@@ -15,19 +15,33 @@ class DataAccessLayer {
     // Ensure data directory exists
     await fs.mkdir(this.dataDir, { recursive: true });
     
-    // Initialize files with empty arrays if they don't exist
-    const files = [
-      this.queriesFile,
-      this.cvesFile,
-      this.scansFile,
-      this.notificationsFile
-    ];
+    // Initialize files with proper object structure
+    const fileStructures = {
+      [this.queriesFile]: { queries: [] },
+      [this.cvesFile]: { cves: [] },
+      [this.scansFile]: {
+        scans: [],
+        stats: {
+          totalScans: 0,
+          successfulScans: 0,
+          failedScans: 0,
+          byStatus: {
+            pending: 0,
+            running: 0,
+            completed: 0,
+            failed: 0,
+            cancelled: 0
+          }
+        }
+      },
+      [this.notificationsFile]: { notifications: [] }
+    };
 
-    for (const file of files) {
+    for (const [file, structure] of Object.entries(fileStructures)) {
       try {
         await fs.access(file);
       } catch {
-        await fs.writeFile(file, JSON.stringify([], null, 2));
+        await fs.writeFile(file, JSON.stringify(structure, null, 2));
       }
     }
   }
@@ -55,54 +69,56 @@ class DataAccessLayer {
 
   // Query operations
   async getAllQueries() {
-    return await this.readFile(this.queriesFile);
+    const data = await this.readFile(this.queriesFile);
+    return data.queries || [];
   }
 
   async createQuery(query) {
-    const queries = await this.getAllQueries();
+    const data = await this.readFile(this.queriesFile);
     const newQuery = {
       id: Date.now().toString(),
       ...query,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    queries.push(newQuery);
-    await this.writeFile(this.queriesFile, queries);
+    data.queries.push(newQuery);
+    await this.writeFile(this.queriesFile, data);
     return newQuery;
   }
 
   async updateQuery(id, updates) {
-    const queries = await this.getAllQueries();
-    const index = queries.findIndex(q => q.id === id);
+    const data = await this.readFile(this.queriesFile);
+    const index = data.queries.findIndex(q => q.id === id);
     if (index !== -1) {
-      queries[index] = { ...queries[index], ...updates, updatedAt: new Date().toISOString() };
-      await this.writeFile(this.queriesFile, queries);
-      return queries[index];
+      data.queries[index] = { ...data.queries[index], ...updates, updatedAt: new Date().toISOString() };
+      await this.writeFile(this.queriesFile, data);
+      return data.queries[index];
     }
     return null;
   }
 
   async deleteQuery(id) {
-    const queries = await this.getAllQueries();
-    const filtered = queries.filter(q => q.id !== id);
-    await this.writeFile(this.queriesFile, filtered);
+    const data = await this.readFile(this.queriesFile);
+    data.queries = data.queries.filter(q => q.id !== id);
+    await this.writeFile(this.queriesFile, data);
     return true;
   }
 
   // CVE operations
   async getAllCVEs() {
-    return await this.readFile(this.cvesFile);
+    const data = await this.readFile(this.cvesFile);
+    return data.cves || [];
   }
 
   async createCVE(cve) {
-    const cves = await this.getAllCVEs();
+    const data = await this.readFile(this.cvesFile);
     const newCVE = {
       id: cve.cveId || Date.now().toString(),
       ...cve,
       createdAt: new Date().toISOString()
     };
-    cves.push(newCVE);
-    await this.writeFile(this.cvesFile, cves);
+    data.cves.push(newCVE);
+    await this.writeFile(this.cvesFile, data);
     return newCVE;
   }
 
@@ -153,17 +169,17 @@ class DataAccessLayer {
 
   // Statistics
   async getStats() {
-    const queries = await this.getAllQueries();
-    const cves = await this.getAllCVEs();
-    const scans = await this.readFile(this.scansFile);
-    const notifications = await this.readFile(this.notificationsFile);
+    const queriesData = await this.readFile(this.queriesFile);
+    const cvesData = await this.readFile(this.cvesFile);
+    const scansData = await this.readFile(this.scansFile);
+    const notificationsData = await this.readFile(this.notificationsFile);
 
     return {
-      totalQueries: queries.length,
-      totalCVEs: cves.length,
-      totalScans: scans.length,
-      totalNotifications: notifications.length,
-      lastScan: scans.length > 0 ? scans[scans.length - 1].timestamp : null
+      totalQueries: queriesData.queries?.length || 0,
+      totalCVEs: cvesData.cves?.length || 0,
+      totalScans: scansData.scans?.length || 0,
+      totalNotifications: notificationsData.notifications?.length || 0,
+      lastScan: scansData.scans?.length > 0 ? scansData.scans[scansData.scans.length - 1].timestamp : null
     };
   }
 }
