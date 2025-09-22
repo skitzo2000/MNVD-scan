@@ -143,8 +143,8 @@ async function getQueryLastChecked(dal, queryId) {
   if (query?.lastChecked) {
     return new Date(query.lastChecked);
   }
-  // Default to 30 days ago if no last checked time
-  return new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  // Default to 60 days ago for first-time queries to ensure we get 30 days of data
+  return new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
 }
 
 module.exports = {

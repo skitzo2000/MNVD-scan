@@ -73,8 +73,19 @@ async function processQuery(db, query, sal) {
     const lastChecked = await getQueryLastChecked(db, id);
     console.log(`Last checked: ${lastChecked.toISOString()}`);
 
-    // Only fetch vulnerabilities modified since last check
-    let vulnerabilities = await nvdClient.fetchVulnerabilitiesModifiedSince(cpe_id, lastChecked);
+    // Check if this is a first query (more than 30 days ago)
+    const daysSinceLastCheck = Math.floor((Date.now() - lastChecked.getTime()) / (1000 * 60 * 60 * 24));
+    const isFirstQuery = daysSinceLastCheck > 30;
+    
+    // For first queries, pull 90 days of data. For recent queries, use the optimized approach
+    let vulnerabilities;
+    if (isFirstQuery) {
+      console.log(`First query detected - pulling 90 days of data for ${cpe_id}`);
+      vulnerabilities = await nvdClient.fetchRecentVulnerabilitiesByCPE(cpe_id, 90);
+    } else {
+      console.log(`Recent query - using optimized approach for ${cpe_id}`);
+      vulnerabilities = await nvdClient.fetchVulnerabilitiesModifiedSince(cpe_id, lastChecked);
+    }
 
     if (vulnerabilities.length === 0) {
       await logScan(db, id, cpe_id, 'success', 'No new vulnerabilities found');

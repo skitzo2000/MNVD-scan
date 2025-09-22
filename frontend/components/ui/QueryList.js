@@ -33,11 +33,11 @@ const QueryList = ({
   };
 
   const getCardSeverityStyle = (query) => {
-    if (query.critical_high_count > 0) {
+    if (query.criticalHighCount > 0) {
       return { borderLeft: '4px solid #d32f2f', backgroundColor: '#ffebee' };
-    } else if (query.medium_count > 0) {
+    } else if (query.mediumCount > 0) {
       return { borderLeft: '4px solid #f57c00', backgroundColor: '#fff3e0' };
-    } else if (query.low_count > 0) {
+    } else if (query.lowCount > 0) {
       return { borderLeft: '4px solid #1976d2', backgroundColor: '#e3f2fd' };
     }
     return {};
@@ -89,9 +89,9 @@ const QueryList = ({
                 </Typography>
               </TableCell>
               <TableCell align="center">
-                {query.critical_high_count > 0 ? (
+                {query.criticalHighCount > 0 ? (
                   <Chip 
-                    label={query.critical_high_count}
+                    label={query.criticalHighCount}
                     size="small"
                     sx={{ 
                       color: getSeverityTextColor('high'),
@@ -100,13 +100,13 @@ const QueryList = ({
                     }}
                   />
                 ) : (
-                  <Typography variant="body2" color="text.secondary">0</Typography>
+                  <Typography variant="body2" color="text.secondary">-</Typography>
                 )}
               </TableCell>
               <TableCell align="center">
-                {query.medium_count > 0 ? (
+                {query.mediumCount > 0 ? (
                   <Chip 
-                    label={query.medium_count}
+                    label={query.mediumCount}
                     size="small"
                     sx={{ 
                       color: getSeverityTextColor('medium'),
@@ -115,13 +115,13 @@ const QueryList = ({
                     }}
                   />
                 ) : (
-                  <Typography variant="body2" color="text.secondary">0</Typography>
+                  <Typography variant="body2" color="text.secondary">-</Typography>
                 )}
               </TableCell>
               <TableCell align="center">
-                {query.low_count > 0 ? (
+                {query.lowCount > 0 ? (
                   <Chip 
-                    label={query.low_count}
+                    label={query.lowCount}
                     size="small"
                     sx={{ 
                       color: getSeverityTextColor('low'),
@@ -130,17 +130,17 @@ const QueryList = ({
                     }}
                   />
                 ) : (
-                  <Typography variant="body2" color="text.secondary">0</Typography>
+                  <Typography variant="body2" color="text.secondary">-</Typography>
                 )}
               </TableCell>
               <TableCell align="center">
                 <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                  {query.total_cves}
+                  {query.totalCves}
                 </Typography>
               </TableCell>
               <TableCell align="center">
                 <Typography variant="body2">
-                  {new Date(query.created_at).toLocaleDateString()}
+                  {new Date(query.createdAt).toLocaleDateString()}
                 </Typography>
               </TableCell>
               <TableCell align="center">

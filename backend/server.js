@@ -67,16 +67,86 @@ app.post('/api/queries', async (req, res) => {
       return res.status(500).json({ error: 'Database not initialized' });
     }
 
+    // Check for duplicate CPE
+    const existingQueries = await getAllQueries(dbInstance);
+    const duplicateQuery = existingQueries.find(query => query.cpe_id === cpe_id);
+    
+    if (duplicateQuery) {
+      return res.status(409).json({ 
+        error: 'CPE already exists', 
+        message: `A query with CPE "${cpe_id}" already exists`,
+        existingQuery: {
+          id: duplicateQuery.id,
+          name: duplicateQuery.name,
+          cpe_id: duplicateQuery.cpe_id
+        }
+      });
+    }
+
+    let finalName = name;
+    let finalDescription = description;
+
+    // Auto-fetch CPE details if name/description are empty
+    if (!name || !description) {
+      try {
+        const nvdClient = require('./nvd-client');
+        console.log(`Auto-fetching CPE details for: ${cpe_id}`);
+        
+        // Use existing function to get vulnerability data
+        const result = await nvdClient.fetchVulnerabilitiesByCPE(cpe_id, 0, 10);
+        
+        if (result.vulnerabilities && result.vulnerabilities.length > 0) {
+          // Extract CPE details from the first vulnerability
+          const firstVuln = result.vulnerabilities[0];
+          const cpeMatch = firstVuln.cpeMatch;
+          
+          // Parse CPE to extract vendor and product information
+          const cpeParts = cpeMatch.split(':');
+          const vendor = cpeParts[3] || 'Unknown';
+          const product = cpeParts[4] || 'Unknown';
+          const version = cpeParts[5] || '';
+          
+          // Create meaningful name and description
+          if (!finalName) {
+            finalName = `${vendor} ${product}${version ? ` ${version}` : ''}`.trim();
+          }
+          if (!finalDescription) {
+            finalDescription = `Monitoring ${vendor} ${product} for security vulnerabilities`;
+          }
+          
+          console.log(`Auto-fetched details - Name: ${finalName}, Description: ${finalDescription}`);
+        }
+      } catch (error) {
+        console.error('Error auto-fetching CPE details:', error);
+        // Continue with user-provided data even if auto-fetch fails
+      }
+    }
+
     const createdQuery = await createQuery(dbInstance, {
       cpe_id,
-      name: name || null,
-      description: description || null
+      name: finalName || null,
+      description: finalDescription || null
     });
 
     res.status(201).json(createdQuery);
   } catch (error) {
     console.error('Error creating query:', error);
     res.status(500).json({ error: 'Failed to create query' });
+  }
+});
+
+// Get CVEs for a specific query
+app.get('/api/queries/:id/cves', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!dbInstance) {
+      return res.status(500).json({ error: 'Database not initialized' });
+    }
+    const cves = await getCVEsForQuery(dbInstance, id);
+    res.json(cves);
+  } catch (error) {
+    console.error('Error fetching CVEs for query:', error);
+    res.status(500).json({ error: 'Failed to fetch CVEs for query' });
   }
 });
 
@@ -156,7 +226,7 @@ app.get('/api/stats', async (req, res) => {
     const recentNotifications = await getRecentNotifications(dbInstance);
     res.json({
       totalQueries: stats.totalQueries || 0,
-      totalCVEs: stats.totalCVEs || 0,
+      processedCVEs: stats.totalCVEs || 0,  // Change from totalCVEs to processedCVEs
       totalScans: stats.totalScans || 0,
       totalNotifications: stats.totalNotifications || 0,
       lastScan: stats.lastScan,
@@ -174,26 +244,20 @@ app.get('/api/queries-with-stats', async (req, res) => {
     if (!dbInstance) {
       return res.status(500).json({ error: 'Database not initialized' });
     }
-    const queriesWithStats = await getQueryCVEStats(dbInstance);
+    const queries = await getAllQueries(dbInstance);
+    const queriesWithStats = await Promise.all(
+      queries.map(async (query) => {
+        const stats = await getQueryCVEStats(dbInstance, query.id);
+        return {
+          ...query,
+          ...stats  // Flatten the stats directly onto the query object
+        };
+      })
+    );
     res.json(queriesWithStats);
   } catch (error) {
     console.error('Error fetching queries with stats:', error);
     res.status(500).json({ error: 'Failed to fetch queries with statistics' });
-  }
-});
-
-// Get CVEs for a specific query
-app.get('/api/queries/:id/cves', async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!dbInstance) {
-      return res.status(500).json({ error: 'Database not initialized' });
-    }
-    const cves = await getCVEsForQuery(dbInstance, parseInt(id));
-    res.json(cves);
-  } catch (error) {
-    console.error('Error fetching CVEs for query:', error);
-    res.status(500).json({ error: 'Failed to fetch CVEs for query' });
   }
 });
 

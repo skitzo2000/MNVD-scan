@@ -29,11 +29,11 @@ const QueryCard = ({
   };
 
   const getCardSeverityStyle = (query) => {
-    if (query.critical_high_count > 0) {
+    if (query.criticalHighCount > 0) {
       return { borderLeft: '4px solid #d32f2f', backgroundColor: '#ffebee' };
-    } else if (query.medium_count > 0) {
+    } else if (query.mediumCount > 0) {
       return { borderLeft: '4px solid #f57c00', backgroundColor: '#fff3e0' };
-    } else if (query.low_count > 0) {
+    } else if (query.lowCount > 0) {
       return { borderLeft: '4px solid #1976d2', backgroundColor: '#e3f2fd' };
     }
     return {};
@@ -41,10 +41,14 @@ const QueryCard = ({
 
   return (
     <Card 
-      elevation={2} 
+      elevation={2}
       sx={{ 
         ...getCardSeverityStyle(query),
         cursor: 'pointer',
+        width: '100%',
+        maxWidth: '100%',
+        minWidth: 0,  // Allow flex shrinking
+        flexShrink: 1,  // Allow the card to shrink
         transition: 'transform 0.2s, box-shadow 0.2s',
         '&:hover': {
           transform: 'translateY(-2px)',
@@ -61,7 +65,19 @@ const QueryCard = ({
           {query.description || 'No description'}
         </Typography>
         <Box sx={{ mb: 2 }}>
-          <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              fontFamily: 'monospace', 
+              wordBreak: 'break-all',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              maxWidth: '100%',
+              display: 'block'
+            }}
+            title={query.cpe_id}  // Show full CPE on hover
+          >
             {query.cpe_id}
           </Typography>
         </Box>
@@ -72,20 +88,20 @@ const QueryCard = ({
             CVE Statistics:
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {query.critical_high_count > 0 && (
+            {query.criticalHighCount > 0 && (
               <Chip 
-                label={`${query.critical_high_count} Critical/High`}
+                label={`${query.criticalHighCount} Critical/High`}
                 size="small"
                 sx={{ 
-                  color: getSeverityTextColor('high'),
+                  color: getSeverityTextColor('critical'),
                   backgroundColor: '#ffebee',
                   fontWeight: 'bold'
                 }}
               />
             )}
-            {query.medium_count > 0 && (
+            {query.mediumCount > 0 && (
               <Chip 
-                label={`${query.medium_count} Medium`}
+                label={`${query.mediumCount} Medium`}
                 size="small"
                 sx={{ 
                   color: getSeverityTextColor('medium'),
@@ -94,9 +110,9 @@ const QueryCard = ({
                 }}
               />
             )}
-            {query.low_count > 0 && (
+            {query.lowCount > 0 && (
               <Chip 
-                label={`${query.low_count} Low`}
+                label={`${query.lowCount} Low`}
                 size="small"
                 sx={{ 
                   color: getSeverityTextColor('low'),
@@ -105,7 +121,7 @@ const QueryCard = ({
                 }}
               />
             )}
-            {query.total_cves === 0 && (
+            {query.totalCves === 0 && (
               <Chip 
                 label="No CVEs"
                 size="small"
@@ -114,12 +130,12 @@ const QueryCard = ({
             )}
           </Box>
           <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-            Total: {query.total_cves} CVE{query.total_cves !== 1 ? 's' : ''}
+            Total: {query.totalCves} CVE{query.totalCves !== 1 ? 's' : ''}
           </Typography>
         </Box>
 
         <Typography variant="caption" color="text.secondary">
-          Created: {new Date(query.created_at).toLocaleDateString()}
+          Created: {new Date(query.createdAt).toLocaleDateString()}
         </Typography>
       </CardContent>
       <CardActions>

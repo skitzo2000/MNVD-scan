@@ -244,13 +244,34 @@ async function fetchVulnerabilitiesModifiedSince(cpeId, lastCheckDate, retryCoun
   try {
     await enforceRateLimit();
 
+    // Use the working pubStartDate approach but with a shorter time window
+    const endDate = new Date();
+    const startDate = new Date(lastCheckDate);
+    
+    // For first-time queries or very old checks, pull up to 1 year of data
+    // For recent checks, limit to 7 days to avoid huge datasets
+    const daysSinceLastCheck = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
+    const isFirstQuery = daysSinceLastCheck > 30; // If last check was more than 30 days ago
+    const actualDaysBack = isFirstQuery ? Math.min(daysSinceLastCheck, 365) : Math.min(daysSinceLastCheck, 7);
+    
+    // For first queries, ensure we get at least 90 days to catch more vulnerabilities
+    const minFirstQueryDays = 90;
+    let finalDaysBack = actualDaysBack;
+    if (isFirstQuery && actualDaysBack < minFirstQueryDays) {
+      finalDaysBack = minFirstQueryDays;
+    }
+    
+    const adjustedStartDate = new Date();
+    adjustedStartDate.setDate(endDate.getDate() - finalDaysBack);
+
     const params = {
       virtualMatchString: cpeId,
-      lastModStartDate: lastCheckDate.toISOString(),
+      pubStartDate: adjustedStartDate.toISOString(),
+      pubEndDate: endDate.toISOString(),
       resultsPerPage: 100
     };
 
-    console.log(`Fetching vulnerabilities modified since ${lastCheckDate.toISOString()} for CPE: ${cpeId}`);
+    console.log(`Fetching vulnerabilities published in last ${finalDaysBack} days for CPE: ${cpeId} ${isFirstQuery ? '(first query - min 90 days)' : '(recent check - 7 days max)'}`);
 
     const response = await apiClient.get(NVD_API_BASE_URL, { params });
 
@@ -276,8 +297,15 @@ async function fetchVulnerabilitiesModifiedSince(cpeId, lastCheckDate, retryCoun
       };
     }) || [];
 
-    console.log(`Found ${vulnerabilities.length} vulnerabilities modified since ${lastCheckDate.toISOString()}`);
-    return vulnerabilities;
+    // Filter by lastModifiedDate on the client side since API doesn't support it
+    const filteredVulnerabilities = vulnerabilities.filter(vuln => {
+      const vulnLastModified = new Date(vuln.lastModifiedDate);
+      return vulnLastModified >= lastCheckDate;
+    });
+
+    console.log(`Found ${filteredVulnerabilities.length} vulnerabilities modified since ${lastCheckDate.toISOString()} (from ${vulnerabilities.length} total)`);
+    return filteredVulnerabilities;
+
 
   } catch (error) {
     console.error(`Error fetching modified vulnerabilities for CPE ${cpeId}:`, error.message);
@@ -293,10 +321,76 @@ async function fetchVulnerabilitiesModifiedSince(cpeId, lastCheckDate, retryCoun
   }
 }
 
+// Enhanced function to get complete CPE information including details and first date
+async function fetchCompleteCPEInfo(cpeId) {
+  try {
+    console.log(`Fetching complete CPE information for: ${cpeId}`);
+    
+    // First, get a sample of vulnerabilities to extract CPE details and find first date
+    const result = await fetchVulnerabilitiesByCPE(cpeId, 0, 50);
+    
+    if (!result.vulnerabilities || result.vulnerabilities.length === 0) {
+      console.log(`No vulnerabilities found for ${cpeId}`);
+      return {
+        cpe_id: cpeId,
+        name: null,
+        description: null,
+        firstDate: null,
+        totalVulnerabilities: 0,
+        vulnerabilities: []
+      };
+    }
+
+    // Extract CPE details from the first vulnerability's CPE match
+    const firstVuln = result.vulnerabilities[0];
+    const cpeMatch = firstVuln.cpeMatch;
+    
+    // Parse CPE to extract vendor and product information
+    const cpeParts = cpeMatch.split(':');
+    const vendor = cpeParts[3] || 'Unknown';
+    const product = cpeParts[4] || 'Unknown';
+    const version = cpeParts[5] || '';
+    
+    // Create a meaningful name from CPE parts
+    const name = `${vendor} ${product}${version ? ` ${version}` : ''}`.trim();
+    
+    // Create description from CPE information
+    const description = `Monitoring ${vendor} ${product} for security vulnerabilities`;
+    
+    // Find the earliest published date
+    const earliestDate = result.vulnerabilities.reduce((earliest, vuln) => {
+      const publishedDate = new Date(vuln.publishedDate);
+      return !earliest || publishedDate < earliest ? publishedDate : earliest;
+    }, null);
+
+    console.log(`Complete CPE info for ${cpeId}: Name=${name}, FirstDate=${earliestDate?.toISOString()}, TotalVulns=${result.totalResults}`);
+
+    return {
+      cpe_id: cpeId,
+      name: name,
+      description: description,
+      firstDate: earliestDate?.toISOString() || null,
+      totalVulnerabilities: result.totalResults,
+      vulnerabilities: result.vulnerabilities.slice(0, 10) // Return first 10 for preview
+    };
+
+  } catch (error) {
+    console.error(`Error fetching complete CPE info for ${cpeId}:`, error.message);
+    return {
+      cpe_id: cpeId,
+      name: null,
+      description: null,
+      firstDate: null,
+      totalVulnerabilities: 0,
+      vulnerabilities: []
+    };
+  }
+}
 module.exports = {
   fetchVulnerabilitiesByCPE,
   fetchAllVulnerabilitiesByCPE,
   fetchRecentVulnerabilitiesByCPE,
   fetchVulnerabilitiesModifiedSince,
+  fetchCompleteCPEInfo,
   isValidCPE
 };
