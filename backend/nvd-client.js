@@ -248,10 +248,11 @@ async function fetchVulnerabilitiesModifiedSince(cpeId, lastCheckDate, retryCoun
     const endDate = new Date();
     const startDate = new Date(lastCheckDate);
     
-    // If lastCheckDate is too old, limit to last 7 days to avoid huge datasets
-    const maxDaysBack = 7;
+    // For first-time queries or very old checks, pull 30 days of data
+    // For recent checks, limit to 7 days to avoid huge datasets
     const daysSinceLastCheck = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
-    const actualDaysBack = Math.min(daysSinceLastCheck, maxDaysBack);
+    const isFirstQuery = daysSinceLastCheck > 30; // If last check was more than 30 days ago
+    const actualDaysBack = isFirstQuery ? 30 : Math.min(daysSinceLastCheck, 7);
     
     const adjustedStartDate = new Date();
     adjustedStartDate.setDate(endDate.getDate() - actualDaysBack);
@@ -263,7 +264,7 @@ async function fetchVulnerabilitiesModifiedSince(cpeId, lastCheckDate, retryCoun
       resultsPerPage: 100
     };
 
-    console.log(`Fetching vulnerabilities published in last ${actualDaysBack} days for CPE: ${cpeId}`);
+    console.log(`Fetching vulnerabilities published in last ${actualDaysBack} days for CPE: ${cpeId} ${isFirstQuery ? '(first query - 30 days)' : '(recent check - 7 days max)'}`);
 
     const response = await apiClient.get(NVD_API_BASE_URL, { params });
 
