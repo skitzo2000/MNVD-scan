@@ -91,8 +91,25 @@ async function isCVEProcessed(dal, cveId) {
   return cves.some(cve => cve.cveId === cveId);
 }
 
-async function markCVEProcessed(dal, cveId, queryId) {
-  return await dal.createCVE({ cveId, queryId, processed: true });
+async function markCVEProcessed(dal, cveId, queryId, vulnerabilityData = null) {
+  const cveData = {
+    cveId,
+    queryId,
+    processed: true,
+    createdAt: new Date().toISOString()
+  };
+  
+  // Add vulnerability data if provided
+  if (vulnerabilityData) {
+    cveData.severity = vulnerabilityData.severity;
+    cveData.cvssScore = vulnerabilityData.cvssScore;
+    cveData.description = vulnerabilityData.description;
+    cveData.nvdUrl = vulnerabilityData.nvdUrl;
+    cveData.publishedDate = vulnerabilityData.publishedDate;
+    cveData.lastModifiedDate = vulnerabilityData.lastModifiedDate;
+  }
+  
+  return await dal.createCVE(cveData);
 }
 
 async function logScan(dal, scanData) {
@@ -102,11 +119,32 @@ async function logScan(dal, scanData) {
 async function getQueryCVEStats(dal, queryId) {
   const cves = await dal.getCVEsForQuery(queryId);
   return {
-    total: cves.length,
-    high: cves.filter(cve => cve.severity === 'HIGH').length,
-    medium: cves.filter(cve => cve.severity === 'MEDIUM').length,
-    low: cves.filter(cve => cve.severity === 'LOW').length
+    totalCves: cves.length,
+    criticalHighCount: cves.filter(cve => cve.severity === 'HIGH' || cve.severity === 'CRITICAL').length,
+    mediumCount: cves.filter(cve => cve.severity === 'MEDIUM').length,
+    lowCount: cves.filter(cve => cve.severity === 'LOW').length
   };
+}
+
+// Track last check time for queries
+async function updateQueryLastChecked(dal, queryId) {
+  const queries = await dal.getAllQueries();
+  const query = queries.find(q => q.id === queryId);
+  if (query) {
+    query.lastChecked = new Date().toISOString();
+    await dal.updateQuery(query);
+    console.log(`Updated last checked time for query ${queryId}: ${query.lastChecked}`);
+  }
+}
+
+async function getQueryLastChecked(dal, queryId) {
+  const queries = await dal.getAllQueries();
+  const query = queries.find(q => q.id === queryId);
+  if (query?.lastChecked) {
+    return new Date(query.lastChecked);
+  }
+  // Default to 30 days ago if no last checked time
+  return new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 }
 
 module.exports = {
@@ -126,5 +164,7 @@ module.exports = {
   isCVEProcessed,
   markCVEProcessed,
   logScan,
-  getQueryCVEStats
+  getQueryCVEStats,
+  updateQueryLastChecked,
+  getQueryLastChecked
 };
