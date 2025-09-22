@@ -11,13 +11,11 @@ import {
 
 const QueryForm = ({ open, onClose, onSubmit }) => {
   const [newQuery, setNewQuery] = useState({
-    cpe_id: '',
-    name: '',
-    description: ''
+    cpe_id: ''
   });
 
   const handleClose = () => {
-    setNewQuery({ cpe_id: '', name: '', description: '' });
+    setNewQuery({ cpe_id: '' });
     onClose();
   };
 
@@ -45,33 +43,12 @@ const QueryForm = ({ open, onClose, onSubmit }) => {
           value={newQuery.cpe_id}
           onChange={(e) => setNewQuery({ ...newQuery, cpe_id: e.target.value })}
           placeholder="cpe:2.3:a:microsoft:windows_10:*:*:*:*:*:*:*"
-          helperText="Common Platform Enumeration (CPE) identifier"
+          helperText="Common Platform Enumeration (CPE) identifier - Name and description will be auto-generated"
           sx={{ mb: 2 }}
         />
         <Alert severity="info" sx={{ mb: 2 }}>
           All notifications will be sent to the configured Discord webhook.
         </Alert>
-        <TextField
-          margin="dense"
-          label="Query Name (Optional)"
-          fullWidth
-          variant="outlined"
-          value={newQuery.name}
-          onChange={(e) => setNewQuery({ ...newQuery, name: e.target.value })}
-          placeholder="Windows 10 Vulnerabilities"
-          sx={{ mb: 2 }}
-        />
-        <TextField
-          margin="dense"
-          label="Description (Optional)"
-          fullWidth
-          variant="outlined"
-          multiline
-          rows={3}
-          value={newQuery.description}
-          onChange={(e) => setNewQuery({ ...newQuery, description: e.target.value })}
-          placeholder="Monitoring Windows 10 for security vulnerabilities"
-        />
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
