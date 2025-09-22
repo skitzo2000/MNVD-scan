@@ -1,10 +1,9 @@
-const { initializeDatabase, isCVEProcessed, markCVEProcessed, logScan, getAllQueries } = require('./database');
+const { initializeDatabase, isCVEProcessed, markCVEProcessed, logScan, getAllQueries, updateQueryLastChecked, getQueryLastChecked } = require('./database');
 const nvdClient = require('./nvd-client');
 const ScanAccessLayer = require('./sal');
 
 // Scan configuration
-const SCAN_BATCH_SIZE = 5; // Process 5 queries at a time
-const SCAN_DELAY = 2000; // 2 second delay between batches
+const SCAN_DELAY = 6000; // 6 second delay between queries (NVD recommendation)
 
 // Main scanning function
 async function runScan(db) {
@@ -29,18 +28,16 @@ async function runScan(db) {
 
     console.log(`Found ${queries.length} queries to process`);
 
-    // Process queries in batches to avoid overwhelming the API
-    for (let i = 0; i < queries.length; i += SCAN_BATCH_SIZE) {
-      const batch = queries.slice(i, i + SCAN_BATCH_SIZE);
-      console.log(`Processing batch ${Math.floor(i / SCAN_BATCH_SIZE) + 1} of ${Math.ceil(queries.length / SCAN_BATCH_SIZE)}`);
+    // Process queries sequentially to respect rate limits
+    for (let i = 0; i < queries.length; i++) {
+      const query = queries[i];
+      console.log(`Processing query ${i + 1} of ${queries.length}: ${query.name || query.cpe_id}`);
+      
+      await processQuery(db, query, sal);
 
-      // Process each query in the batch
-      const batchPromises = batch.map(query => processQuery(db, query, sal));
-      await Promise.allSettled(batchPromises);
-
-      // Wait between batches
-      if (i + SCAN_BATCH_SIZE < queries.length) {
-        console.log(`Waiting ${SCAN_DELAY / 1000} seconds before next batch...`);
+      // Wait between queries to respect rate limits
+      if (i < queries.length - 1) {
+        console.log(`Waiting ${SCAN_DELAY / 1000} seconds before next query...`);
         await new Promise(resolve => setTimeout(resolve, SCAN_DELAY));
       }
     }
@@ -72,24 +69,23 @@ async function processQuery(db, query, sal) {
       return;
     }
 
-    // For development: check recent vulnerabilities AND all vulnerabilities if none found recently
-    let vulnerabilities = await nvdClient.fetchRecentVulnerabilitiesByCPE(cpe_id, 30);
-    
-    if (vulnerabilities.length === 0) {
-      console.log(`No recent vulnerabilities found for ${cpe_id}, checking all vulnerabilities...`);
-      // Fetch first 10 vulnerabilities regardless of date for testing
-      const allVulns = await nvdClient.fetchVulnerabilitiesByCPE(cpe_id, 0, 10);
-      vulnerabilities = allVulns.vulnerabilities || [];
-      console.log(`Found ${vulnerabilities.length} total vulnerabilities for ${cpe_id}`);
-    }
+    // Get the last check time for this query
+    const lastChecked = await getQueryLastChecked(db, id);
+    console.log(`Last checked: ${lastChecked.toISOString()}`);
+
+    // Only fetch vulnerabilities modified since last check
+    let vulnerabilities = await nvdClient.fetchVulnerabilitiesModifiedSince(cpe_id, lastChecked);
 
     if (vulnerabilities.length === 0) {
       await logScan(db, id, cpe_id, 'success', 'No new vulnerabilities found');
-      console.log(`No new vulnerabilities found for ${cpe_id}`);
+      console.log(`No new vulnerabilities found for ${cpe_id} since ${lastChecked.toISOString()}`);
+      
+      // Update last checked time even if no new vulnerabilities
+      await updateQueryLastChecked(db, id);
       return;
     }
 
-    console.log(`Found ${vulnerabilities.length} vulnerabilities for ${cpe_id}`);
+    console.log(`Found ${vulnerabilities.length} vulnerabilities modified since ${lastChecked.toISOString()}`);
 
     // Filter out already processed CVEs
     const newVulnerabilities = [];
@@ -103,6 +99,9 @@ async function processQuery(db, query, sal) {
     if (newVulnerabilities.length === 0) {
       await logScan(db, id, cpe_id, 'success', 'All vulnerabilities already processed');
       console.log(`All ${vulnerabilities.length} vulnerabilities already processed for ${cpe_id}`);
+      
+      // Update last checked time
+      await updateQueryLastChecked(db, id);
       return;
     }
 
@@ -151,12 +150,8 @@ async function processQuery(db, query, sal) {
         await markCVEProcessed(
           db,
           vuln.cveId,
-          cpe_id,
-          vuln.severity,
-          vuln.cvssScore,
-          vuln.description,
-          vuln.nvdUrl,
-          vuln.publishedDate
+          id, // Use the query ID instead of cpe_id
+          vuln // Pass the full vulnerability data
         );
       }
 
@@ -167,6 +162,9 @@ async function processQuery(db, query, sal) {
     } else {
       await logScan(db, id, cpe_id, 'success', 'No new vulnerabilities found');
     }
+
+    // Always update last checked time
+    await updateQueryLastChecked(db, id);
 
   } catch (error) {
     console.error(`Error processing query ${cpe_id}:`, error.message);
@@ -191,7 +189,9 @@ async function scanSpecificCPE(cpeId, db) {
       throw new Error('Invalid CPE format');
     }
 
-    const vulnerabilities = await nvdClient.fetchRecentVulnerabilitiesByCPE(cpeId, 7); // Last 7 days
+    // For manual scans, check last 7 days
+    const lastCheckDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const vulnerabilities = await nvdClient.fetchVulnerabilitiesModifiedSince(cpeId, lastCheckDate);
 
     if (vulnerabilities.length === 0) {
       return { message: 'No vulnerabilities found in the last 7 days' };

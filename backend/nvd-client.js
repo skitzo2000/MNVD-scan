@@ -237,9 +237,66 @@ async function fetchRecentVulnerabilitiesByCPE(cpeId, days = 7, retryCount = 0) 
   }
 }
 
+// Fetch vulnerabilities modified since a specific date (optimized approach)
+async function fetchVulnerabilitiesModifiedSince(cpeId, lastCheckDate, retryCount = 0) {
+  const maxRetries = 1;
+  
+  try {
+    await enforceRateLimit();
+
+    const params = {
+      virtualMatchString: cpeId,
+      lastModStartDate: lastCheckDate.toISOString(),
+      resultsPerPage: 100
+    };
+
+    console.log(`Fetching vulnerabilities modified since ${lastCheckDate.toISOString()} for CPE: ${cpeId}`);
+
+    const response = await apiClient.get(NVD_API_BASE_URL, { params });
+
+    if (response.status !== 200) {
+      throw new Error(`NVD API returned status ${response.status}`);
+    }
+
+    const data = response.data;
+
+    const vulnerabilities = data.vulnerabilities?.map(vuln => {
+      const cve = vuln.cve;
+      const metrics = cve.metrics?.cvssMetricV31?.[0] || cve.metrics?.cvssMetricV30?.[0];
+
+      return {
+        cveId: cve.id,
+        description: cve.descriptions?.find(d => d.lang === 'en')?.value || 'No description available',
+        severity: metrics?.cvssData?.baseSeverity || 'UNKNOWN',
+        cvssScore: metrics?.cvssData?.baseScore || 0,
+        publishedDate: cve.published,
+        lastModifiedDate: cve.lastModified,
+        nvdUrl: `https://nvd.nist.gov/vuln/detail/${cve.id}`,
+        cpeMatch: cpeId
+      };
+    }) || [];
+
+    console.log(`Found ${vulnerabilities.length} vulnerabilities modified since ${lastCheckDate.toISOString()}`);
+    return vulnerabilities;
+
+  } catch (error) {
+    console.error(`Error fetching modified vulnerabilities for CPE ${cpeId}:`, error.message);
+
+    if ((error.response?.status === 429 || error.response?.status === 404) && retryCount < maxRetries) {
+      console.log(`API returned ${error.response?.status}, waiting 30 seconds before retry... (attempt ${retryCount + 1}/${maxRetries + 1})`);
+      await new Promise(resolve => setTimeout(resolve, 30000));
+      return fetchVulnerabilitiesModifiedSince(cpeId, lastCheckDate, retryCount + 1);
+    }
+
+    console.log(`Failed to fetch modified vulnerabilities for CPE ${cpeId} after ${retryCount + 1} attempts. Returning empty array.`);
+    return [];
+  }
+}
+
 module.exports = {
   fetchVulnerabilitiesByCPE,
   fetchAllVulnerabilitiesByCPE,
   fetchRecentVulnerabilitiesByCPE,
+  fetchVulnerabilitiesModifiedSince,
   isValidCPE
 };
