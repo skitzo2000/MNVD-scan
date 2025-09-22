@@ -244,13 +244,26 @@ async function fetchVulnerabilitiesModifiedSince(cpeId, lastCheckDate, retryCoun
   try {
     await enforceRateLimit();
 
+    // Use the working pubStartDate approach but with a shorter time window
+    const endDate = new Date();
+    const startDate = new Date(lastCheckDate);
+    
+    // If lastCheckDate is too old, limit to last 7 days to avoid huge datasets
+    const maxDaysBack = 7;
+    const daysSinceLastCheck = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
+    const actualDaysBack = Math.min(daysSinceLastCheck, maxDaysBack);
+    
+    const adjustedStartDate = new Date();
+    adjustedStartDate.setDate(endDate.getDate() - actualDaysBack);
+
     const params = {
       virtualMatchString: cpeId,
-      lastModStartDate: lastCheckDate.toISOString(),
+      pubStartDate: adjustedStartDate.toISOString(),
+      pubEndDate: endDate.toISOString(),
       resultsPerPage: 100
     };
 
-    console.log(`Fetching vulnerabilities modified since ${lastCheckDate.toISOString()} for CPE: ${cpeId}`);
+    console.log(`Fetching vulnerabilities published in last ${actualDaysBack} days for CPE: ${cpeId}`);
 
     const response = await apiClient.get(NVD_API_BASE_URL, { params });
 
@@ -276,8 +289,14 @@ async function fetchVulnerabilitiesModifiedSince(cpeId, lastCheckDate, retryCoun
       };
     }) || [];
 
-    console.log(`Found ${vulnerabilities.length} vulnerabilities modified since ${lastCheckDate.toISOString()}`);
-    return vulnerabilities;
+    // Filter by lastModifiedDate on the client side since API doesn't support it
+    const filteredVulnerabilities = vulnerabilities.filter(vuln => {
+      const vulnLastModified = new Date(vuln.lastModifiedDate);
+      return vulnLastModified >= lastCheckDate;
+    });
+
+    console.log(`Found ${filteredVulnerabilities.length} vulnerabilities modified since ${lastCheckDate.toISOString()} (from ${vulnerabilities.length} total)`);
+    return filteredVulnerabilities;
 
   } catch (error) {
     console.error(`Error fetching modified vulnerabilities for CPE ${cpeId}:`, error.message);
