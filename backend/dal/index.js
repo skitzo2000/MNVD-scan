@@ -15,16 +15,19 @@ class DataAccessLayer {
     // Ensure data directory exists
     await fs.mkdir(this.dataDir, { recursive: true });
     
+
     // Initialize files with the structure each layer expects
     const fileStructures = {
       [this.queriesFile]: [], // DAL expects direct array
       [this.cvesFile]: [], // DAL expects direct array
       [this.scansFile]: { // SAL expects object structure
+
         scans: [],
         stats: {
           totalScans: 0,
           successfulScans: 0,
           failedScans: 0,
+
           byType: {
             nvd: 0,
             custom: 0,
@@ -34,12 +37,15 @@ class DataAccessLayer {
           byStatus: {
             completed: 0,
             running: 0,
+
             failed: 0,
             cancelled: 0
           }
         }
       },
+
       [this.notificationsFile]: [] // DAL expects direct array
+
     };
 
     for (const [file, structure] of Object.entries(fileStructures)) {
@@ -122,6 +128,7 @@ class DataAccessLayer {
       ...cve,
       createdAt: new Date().toISOString()
     };
+
     data.push(newCVE);
     await this.writeFile(this.cvesFile, data);
     return newCVE;
@@ -198,11 +205,11 @@ class DataAccessLayer {
     const notifications = Array.isArray(notificationsData) ? notificationsData : [];
 
     return {
-      totalQueries: queries.length,
-      totalCVEs: cves.length,
-      totalScans: scans.length,
-      totalNotifications: notifications.length,
-      lastScan: scans.length > 0 ? scans[scans.length - 1].timestamp : null
+      totalQueries: queriesData.queries?.length || 0,
+      totalCVEs: cvesData.cves?.length || 0,
+      totalScans: scansData.scans?.length || 0,
+      totalNotifications: notificationsData.notifications?.length || 0,
+      lastScan: scansData.scans?.length > 0 ? scansData.scans[scansData.scans.length - 1].timestamp : null
     };
   }
 }

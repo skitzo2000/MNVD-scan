@@ -306,6 +306,7 @@ async function fetchVulnerabilitiesModifiedSince(cpeId, lastCheckDate, retryCoun
     console.log(`Found ${filteredVulnerabilities.length} vulnerabilities modified since ${lastCheckDate.toISOString()} (from ${vulnerabilities.length} total)`);
     return filteredVulnerabilities;
 
+
   } catch (error) {
     console.error(`Error fetching modified vulnerabilities for CPE ${cpeId}:`, error.message);
 
@@ -385,7 +386,6 @@ async function fetchCompleteCPEInfo(cpeId) {
     };
   }
 }
-
 module.exports = {
   fetchVulnerabilitiesByCPE,
   fetchAllVulnerabilitiesByCPE,
