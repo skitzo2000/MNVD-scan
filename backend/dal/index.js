@@ -205,11 +205,11 @@ class DataAccessLayer {
     const notifications = Array.isArray(notificationsData) ? notificationsData : [];
 
     return {
-      totalQueries: queriesData.queries?.length || 0,
-      totalCVEs: cvesData.cves?.length || 0,
-      totalScans: scansData.scans?.length || 0,
-      totalNotifications: notificationsData.notifications?.length || 0,
-      lastScan: scansData.scans?.length > 0 ? scansData.scans[scansData.scans.length - 1].timestamp : null
+      totalQueries: queries.length,
+      totalCVEs: cves.length,
+      totalScans: scans.length,
+      totalNotifications: notifications.length,
+      lastScan: scans.length > 0 ? scans[scans.length - 1].timestamp : null
     };
   }
 }
