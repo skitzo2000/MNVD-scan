@@ -10,6 +10,8 @@ services:
       - NVD_API_KEY=${NVD_API_KEY}
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
       - PORT=3000
+      - USER_ID=${USER_ID:-1000}
+      - GROUP_ID=${GROUP_ID:-1000}
     volumes:
       - nvd_data:/app/data:rw
     user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
