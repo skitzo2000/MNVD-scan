@@ -5,8 +5,8 @@ const StatsCards = ({ stats }) => {
 
   return (
     <Grid container spacing={3} sx={{ mb: 4 }}>
-      <Grid item xs={12} md={6}>
-        <Paper elevation={2} sx={{ p: 3, textAlign: 'center' }}>
+      <Grid item xs={12} sm={6}>
+        <Paper elevation={2} sx={{ p: 3, textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '120px' }}>
           <Typography variant="h4" color="primary">
             {stats.totalQueries}
           </Typography>
@@ -15,8 +15,8 @@ const StatsCards = ({ stats }) => {
           </Typography>
         </Paper>
       </Grid>
-      <Grid item xs={12} md={6}>
-        <Paper elevation={2} sx={{ p: 3, textAlign: 'center' }}>
+      <Grid item xs={12} sm={6}>
+        <Paper elevation={2} sx={{ p: 3, textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '120px' }}>
           <Typography variant="h4" color="secondary">
             {stats.processedCVEs}
           </Typography>

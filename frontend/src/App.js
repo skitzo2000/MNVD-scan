@@ -166,7 +166,7 @@ function App() {
       ) : viewMode === 'cards' ? (
         <Grid container spacing={3}>
           {(queriesWithStats || []).map((query) => (
-            <Grid item xs={12} md={6} lg={4} key={query.id}>
+            <Grid item xs={12} sm={4} key={query.id} sx={{ display: 'flex' }}>
               <QueryCard
                 query={query}
                 onCardClick={handleCardClick}
