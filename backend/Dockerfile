@@ -15,10 +15,13 @@ RUN node -e "require('dotenv'); require('express'); require('axios'); require('c
 # Copy backend source code
 COPY . .
 
-# Create data directory and set proper permissions
-# Don't set ownership here - let docker-compose handle user mapping
+# Create data directory and set proper ownership for node user
 RUN mkdir -p /app/data && \
-    chmod -R 775 /app/data
+    chown -R node:node /app && \
+    chmod -R 755 /app
+
+# Switch to the node user (non-root user provided by the image)
+USER node
 
 # Expose port
 EXPOSE 3000

@@ -1,10 +1,7 @@
-# MNVD Production Docker Compose
+# MNVD Production Docker Compose - Uses pre-built GHCR images
 services:
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    # No ports exposed - backend only accessible internally
+    image: ghcr.io/skitzo2000/mnvd-scan-backend:latest
     environment:
       - NODE_ENV=production
       - NVD_API_KEY=${NVD_API_KEY}
@@ -26,9 +23,7 @@ services:
       - mnvd-network
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: ghcr.io/skitzo2000/mnvd-scan-frontend:latest
     ports:
       - "3000:3000"
     environment:
