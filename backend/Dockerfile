@@ -15,13 +15,10 @@ RUN node -e "require('dotenv'); require('express'); require('axios'); require('c
 # Copy backend source code
 COPY . .
 
-# Create data directory for JSON file storage and ensure node user owns it
+# Create data directory and set proper permissions
+# Don't set ownership here - let docker-compose handle user mapping
 RUN mkdir -p /app/data && \
-    chown -R node:node /app && \
-    chmod -R 755 /app
-
-# User mapping is handled by docker-compose at runtime
-# The entire /app directory is owned by node user for proper permissions
+    chmod -R 775 /app/data
 
 # Expose port
 EXPOSE 3000
