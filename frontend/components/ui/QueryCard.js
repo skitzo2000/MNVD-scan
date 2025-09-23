@@ -57,24 +57,26 @@ const QueryCard = ({
       }}
       onClick={() => onCardClick(query)}
     >
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
+      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+        <Typography variant="h6" gutterBottom sx={{ fontSize: '1rem', lineHeight: 1.2 }}>
           {query.name || `Query ${query.id}`}
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: '0.75rem', lineHeight: 1.3 }}>
           {query.description || 'No description'}
         </Typography>
-        <Box sx={{ mb: 2 }}>
+        <Box sx={{ mb: 1.5 }}>
           <Typography 
             variant="body2" 
             sx={{ 
               fontFamily: 'monospace', 
+              fontSize: '0.7rem',
               wordBreak: 'break-all',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
               maxWidth: '100%',
-              display: 'block'
+              display: 'block',
+              lineHeight: 1.2
             }}
             title={query.cpe_id}  // Show full CPE on hover
           >
@@ -83,16 +85,18 @@ const QueryCard = ({
         </Box>
         
         {/* CVE Statistics */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle2" gutterBottom>
+        <Box sx={{ mb: 1.5 }}>
+          <Typography variant="subtitle2" gutterBottom sx={{ fontSize: '0.75rem', mb: 0.5 }}>
             CVE Statistics:
           </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
             {query.criticalHighCount > 0 && (
               <Chip 
                 label={`${query.criticalHighCount} Critical/High`}
                 size="small"
                 sx={{ 
+                  fontSize: '0.65rem',
+                  height: '20px',
                   color: getSeverityTextColor('critical'),
                   backgroundColor: '#ffebee',
                   fontWeight: 'bold'
@@ -104,6 +108,8 @@ const QueryCard = ({
                 label={`${query.mediumCount} Medium`}
                 size="small"
                 sx={{ 
+                  fontSize: '0.65rem',
+                  height: '20px',
                   color: getSeverityTextColor('medium'),
                   backgroundColor: '#fff3e0',
                   fontWeight: 'bold'
@@ -115,6 +121,8 @@ const QueryCard = ({
                 label={`${query.lowCount} Low`}
                 size="small"
                 sx={{ 
+                  fontSize: '0.65rem',
+                  height: '20px',
                   color: getSeverityTextColor('low'),
                   backgroundColor: '#e3f2fd',
                   fontWeight: 'bold'
@@ -126,22 +134,24 @@ const QueryCard = ({
                 label="No CVEs"
                 size="small"
                 color="default"
+                sx={{ fontSize: '0.65rem', height: '20px' }}
               />
             )}
           </Box>
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block', fontSize: '0.65rem' }}>
             Total: {query.totalCves} CVE{query.totalCves !== 1 ? 's' : ''}
           </Typography>
         </Box>
 
-        <Typography variant="caption" color="text.secondary">
+        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
           Created: {new Date(query.createdAt).toLocaleDateString()}
         </Typography>
       </CardContent>
-      <CardActions>
+      <CardActions sx={{ p: 1, pt: 0 }}>
         <Tooltip title="View CVE Details">
           <Button 
             size="small"
+            sx={{ fontSize: '0.7rem', minWidth: 'auto', px: 1 }}
             onClick={(e) => {
               e.stopPropagation();
               onCardClick(query);
@@ -153,13 +163,14 @@ const QueryCard = ({
         <Tooltip title="Delete Query">
           <IconButton
             color="error"
+            size="small"
             disabled={deletingQuery === query.id}
             onClick={(e) => {
               e.stopPropagation();
               onDelete(query.id);
             }}
           >
-            {deletingQuery === query.id ? <CircularProgress size={20} /> : <DeleteIcon />}
+            {deletingQuery === query.id ? <CircularProgress size={16} /> : <DeleteIcon fontSize="small" />}
           </IconButton>
         </Tooltip>
       </CardActions>
