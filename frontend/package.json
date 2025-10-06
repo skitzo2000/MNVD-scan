@@ -18,7 +18,7 @@
   "dependencies": {
     "next": "^15.5.3",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1",
+    "react-dom": "^19.2.0",
     "@mui/material": "^7.3.2",
     "@mui/icons-material": "^7.3.2",
     "@emotion/react": "^11.14.0",
