@@ -55,12 +55,12 @@ const CVEDetailsDialog = ({
             </Typography>
             <Box sx={{ maxHeight: '400px', overflowY: 'auto' }}>
               {cves.map((cve) => (
-                <Paper key={cve.cve_id} elevation={1} sx={{ p: 2, mb: 2 }}>
+                <Paper key={cve.cveId} elevation={1} sx={{ p: 2, mb: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                     <Typography 
                       variant="h6" 
                       component="a"
-                      href={cve.nvd_url}
+                      href={cve.nvdUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       sx={{ 
@@ -69,7 +69,7 @@ const CVEDetailsDialog = ({
                         '&:hover': { textDecoration: 'underline' }
                       }}
                     >
-                      {cve.cve_id}
+                      {cve.cveId}
                     </Typography>
                     <Chip 
                       label={cve.severity}
@@ -87,7 +87,7 @@ const CVEDetailsDialog = ({
                     {cve.description}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Processed: {new Date(cve.processed_at).toLocaleString()}
+                    Processed: {new Date(cve.createdAt).toLocaleString()}
                   </Typography>
                 </Paper>
               ))}

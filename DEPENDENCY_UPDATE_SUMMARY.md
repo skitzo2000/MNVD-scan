@@ -83,3 +83,7 @@
 - ✅ **Docker Compatible**: Build and deployment working
 
 **The application now uses only actively maintained, non-deprecated packages with regular security updates!** 🚀
+
+## Branch-specific verification notes
+
+- checkout-5: Updated workflow to actions/checkout@v5 and verified local build.
