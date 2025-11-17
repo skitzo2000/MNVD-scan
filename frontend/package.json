@@ -16,7 +16,7 @@
     "clean": "rm -rf .next out node_modules/.cache"
   },
   "dependencies": {
-    "next": "^16.0.1",
+    "next": "^16.0.3",
     "react": "^19.1.1",
     "react-dom": "^19.2.0",
     "@mui/material": "^7.3.4",
