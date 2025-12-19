@@ -1,7 +1,7 @@
 {
   "name": "mnvd-scanner-frontend",
   "version": "1.0.0",
-  "description": "Frontend for NVD Scanner",
+  "description": "Frontend for MNVD Scanner",
   "private": true,
   "type": "module",
   "scripts": {
