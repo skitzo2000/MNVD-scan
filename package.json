@@ -3,34 +3,20 @@
   "version": "1.0.0",
   "description": "MNVD - Monitor National Vulnerability Database with Discord notifications",
   "_nvd_attribution": "This product uses the NVD API but is not endorsed or certified by the NVD.",
-  "main": "backend/server.js",
+  "private": true,
   "scripts": {
-    "start": "node backend/server.js",
-    "dev": "nodemon backend/server.js",
+    "start": "cd backend && npm start",
+    "dev": "cd backend && npm run dev",
     "build": "npm run build:backend && npm run build:frontend",
     "build:backend": "cd backend && npm run build",
     "build:frontend": "cd frontend && npm run build",
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
     "docker:build": "docker build -f docker/Dockerfile -t mnvd .",
-    "docker:run": "docker run -p 3000:3000 --env-file .env mnvd",
-    "audit": "npm audit",
-    "audit:fix": "npm audit fix"
+    "docker:run": "docker run -p 3000:3000 --env-file .env mnvd"
   },
   "keywords": ["nvd", "cve", "security", "discord", "scanner"],
   "author": "",
   "license": "MIT",
-  "dependencies": {
-    "express": "^5.1.0",
-    "axios": "^1.13.2",
-    "sqlite3": "^5.1.7",
-    "node-cron": "^4.2.1",
-    "dotenv": "^17.2.3",
-    "cors": "^2.8.5",
-    "helmet": "^8.0.0",
-    "express-rate-limit": "^8.2.1"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.7"
-  },
   "engines": {
     "node": ">=18.0.0"
   }
