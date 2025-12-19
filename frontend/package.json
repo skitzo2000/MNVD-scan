@@ -16,7 +16,7 @@
     "clean": "rm -rf .next out node_modules/.cache"
   },
   "dependencies": {
-    "next": "^16.0.1",
+    "next": "^16.1.0",
     "react": "^19.1.1",
     "react-dom": "^19.2.0",
     "@mui/material": "^7.3.4",
@@ -25,15 +25,16 @@
     "@emotion/styled": "^11.14.1",
     "@emotion/cache": "^11.14.0",
     "axios": "^1.7.9",
-    "swr": "^2.2.4"
+    "swr": "^2.3.8"
   },
   "devDependencies": {
     "eslint": "^9.39.1",
     "@eslint/js": "^9.36.0",
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-react-hooks": "^7.0.1",
-    "@typescript-eslint/parser": "^8.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.46.4",
-    "@next/bundle-analyzer": "^16.0.1"
+    "@typescript-eslint/parser": "^8.50.0",
+    "@typescript-eslint/eslint-plugin": "^8.50.0",
+    "@next/bundle-analyzer": "^16.1.0",
+    "js-yaml": "^4.1.1"
   }
 }
