@@ -14,6 +14,10 @@ const nextConfig = {
     ];
   },
   
+  // Turbopack configuration (Next.js 16+)
+  // Empty config to acknowledge migration from webpack to Turbopack
+  turbopack: {},
+  
   // Webpack configuration for Docker builds
   webpack: (config, { isServer }) => {
     if (!isServer) {
