@@ -32,7 +32,21 @@ function App() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [viewMode, setViewMode] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('mnvd-scanner-view-mode') || 'cards';
+      // Migrate from old key to new key
+      const oldKey = 'nvd-scanner-view-mode';
+      const newKey = 'mnvd-scanner-view-mode';
+      const newValue = localStorage.getItem(newKey);
+      
+      if (!newValue) {
+        const oldValue = localStorage.getItem(oldKey);
+        if (oldValue) {
+          localStorage.setItem(newKey, oldValue);
+          localStorage.removeItem(oldKey);
+          return oldValue;
+        }
+      }
+      
+      return newValue || 'cards';
     }
     return 'cards';
   });
