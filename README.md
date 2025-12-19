@@ -36,7 +36,7 @@ A Node.js application that monitors the National Vulnerability Database (NVD) fo
 
 1. **Clone the repository and navigate to the project directory**
    ```bash
-   cd /path/to/nvd-scanner
+   cd /path/to/mnvd-scanner
    ```
 
 2. **Create environment file**
@@ -196,7 +196,7 @@ If you need notifications sent to multiple Discord channels:
 
 Check the application logs for detailed error information:
 ```bash
-docker-compose logs nvd-scanner
+docker-compose logs mnvd-scanner
 ```
 
 ## Development
@@ -204,7 +204,7 @@ docker-compose logs nvd-scanner
 ### Project Structure
 
 ```
-nvd-scanner/
+mnvd-scanner/
 ├── backend/                 # Node.js backend
 │   ├── server.js           # Main server file
 │   ├── database.js         # Database operations (DAL interface)

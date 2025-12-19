@@ -8,7 +8,7 @@ const discordClient = axios.create({
   timeout: WEBHOOK_TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
-    'User-Agent': 'NVD-Scanner/1.0.0'
+    'User-Agent': 'MNVD-Scanner/1.0.0'
   }
 });
 
