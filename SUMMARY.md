@@ -77,6 +77,8 @@ After closing PRs #65 and #71:
 - `close-addressed-prs.sh` - Executable script to close obsolete PRs
 - `SUMMARY.md` - This summary document
 
+**Note**: These files are temporary documentation for this task. After closing the PRs and merging this PR, you may want to delete these files from the repository as they are no longer needed.
+
 ## Why Can't the Agent Close PRs Automatically?
 
 The GitHub Copilot coding agent has read-only access to PR information but cannot perform write operations such as:
