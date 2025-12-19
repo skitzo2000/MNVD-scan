@@ -234,11 +234,14 @@ docker compose -f docker-compose.production.yml up -d
 
 ### Manual Installation
 ```bash
-# Backend
-cd backend && npm install && npm start
+# Install dependencies for both services
+npm run install:all
 
-# Frontend
-cd frontend && npm install && npm run build && npm start
+# Start backend
+cd backend && npm start
+
+# In another terminal, build and start frontend
+cd frontend && npm run build && npm start
 ```
 
 ## 🔧 Configuration

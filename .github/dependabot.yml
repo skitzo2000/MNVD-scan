@@ -1,24 +1,5 @@
 version: 2
 updates:
-  # Root package.json (if any dependencies)
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-    open-pull-requests-limit: 10
-    reviewers:
-      - "skitzo2000"
-    assignees:
-      - "skitzo2000"
-    commit-message:
-      prefix: "chore"
-      include: "scope"
-    labels:
-      - "dependencies"
-      - "security"
-
   # Backend dependencies
   - package-ecosystem: "npm"
     directory: "/backend"

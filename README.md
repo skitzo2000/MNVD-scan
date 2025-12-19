@@ -93,14 +93,19 @@ For production deployment using pre-built images from GHCR:
 
 1. **Install dependencies**
    ```bash
-   npm install
-   cd backend && npm install
-   cd ../frontend && npm install
+   # Install backend dependencies
+   cd backend && npm install && cd ..
+   
+   # Install frontend dependencies
+   cd frontend && npm install && cd ..
+   
+   # Or use the convenience script
+   npm run install:all
    ```
 
 2. **Set up environment variables**
    ```bash
-   cp env.example .env
+   cp env_template .env
    # Edit .env with your API keys
    ```
 
