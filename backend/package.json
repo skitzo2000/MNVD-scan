@@ -1,5 +1,5 @@
 {
-  "name": "nvd-scanner-backend",
+  "name": "mnvd-scanner-backend",
   "version": "1.0.0",
   "description": "Backend for NVD Scanner",
   "main": "server.js",

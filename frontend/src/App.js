@@ -32,7 +32,7 @@ function App() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [viewMode, setViewMode] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('nvd-scanner-view-mode') || 'cards';
+      return localStorage.getItem('mnvd-scanner-view-mode') || 'cards';
     }
     return 'cards';
   });
@@ -128,7 +128,7 @@ function App() {
   const handleViewModeChange = (newViewMode) => {
     setViewMode(newViewMode);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('nvd-scanner-view-mode', newViewMode);
+      localStorage.setItem('mnvd-scanner-view-mode', newViewMode);
     }
   };
 

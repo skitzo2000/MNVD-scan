@@ -1,5 +1,5 @@
 {
-  "name": "nvd-scanner-frontend",
+  "name": "mnvd-scanner-frontend",
   "version": "1.0.0",
   "description": "Frontend for NVD Scanner",
   "private": true,
