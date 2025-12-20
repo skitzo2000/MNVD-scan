@@ -1,5 +1,5 @@
 # Frontend Dockerfile for NVD Scanner - Next.js with rootless Docker support
-FROM node:22-alpine AS base
+FROM node:25-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
