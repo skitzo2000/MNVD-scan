@@ -83,11 +83,11 @@ Dependabot monitors three separate Dockerfiles for base image updates:
 ### 1. Daily NPM Checks
 NPM dependencies are checked daily to ensure security vulnerabilities are addressed promptly. This is especially critical for:
 - Backend security middleware (Helmet, CORS, Express Rate Limit)
-- Authentication and HTTP clients (Axios)
+- HTTP clients and API integrations (Axios)
 - Framework dependencies (Express, Next.js, React)
 
 ### 2. Security Updates Priority
-Security updates are **always created as separate PRs** and are never grouped with other updates. This ensures:
+Security updates are **always created as separate PRs** by Dependabot's design and are never grouped with other updates. This default behavior ensures:
 - Security patches can be reviewed and merged quickly
 - Security updates don't get delayed by other dependency changes
 - Critical vulnerabilities can be addressed immediately
