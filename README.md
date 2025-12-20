@@ -180,7 +180,7 @@ If you need notifications sent to multiple Discord channels:
 - Use HTTPS in production
 - Regularly rotate API keys
 - Monitor application logs for security issues
-- Keep dependencies updated
+- Keep dependencies updated (automated via [Dependabot](docs/DEPENDABOT.md))
 
 ## Troubleshooting
 

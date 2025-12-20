@@ -4,9 +4,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/backend"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      interval: "daily"
     open-pull-requests-limit: 10
     reviewers:
       - "skitzo2000"
@@ -18,15 +16,33 @@ updates:
     labels:
       - "dependencies"
       - "backend"
-      - "security"
+    # Group non-security updates together to reduce PR noise
+    groups:
+      production-dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "*-dev"
+          - "eslint*"
+          - "@eslint/*"
+        update-types:
+          - "minor"
+          - "patch"
+      development-dependencies:
+        patterns:
+          - "*-dev"
+          - "eslint*"
+          - "@eslint/*"
+          - "nodemon"
+        update-types:
+          - "minor"
+          - "patch"
 
   # Frontend dependencies
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      interval: "daily"
     open-pull-requests-limit: 10
     reviewers:
       - "skitzo2000"
@@ -38,15 +54,36 @@ updates:
     labels:
       - "dependencies"
       - "frontend"
-      - "security"
+    # Group non-security updates together to reduce PR noise
+    groups:
+      production-dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "*-dev"
+          - "eslint*"
+          - "@eslint/*"
+          - "@next/bundle-analyzer"
+        update-types:
+          - "minor"
+          - "patch"
+      development-dependencies:
+        patterns:
+          - "*-dev"
+          - "eslint*"
+          - "@eslint/*"
+          - "@typescript-eslint/*"
+          - "@next/bundle-analyzer"
+        update-types:
+          - "minor"
+          - "patch"
 
-  # Docker dependencies (Dockerfile base images)
+  # Backend Dockerfile
   - package-ecosystem: "docker"
-    directory: "/"
+    directory: "/backend"
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "09:00"
     open-pull-requests-limit: 5
     reviewers:
       - "skitzo2000"
@@ -58,7 +95,44 @@ updates:
     labels:
       - "dependencies"
       - "docker"
-      - "security"
+      - "backend"
+
+  # Frontend Dockerfile
+  - package-ecosystem: "docker"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "skitzo2000"
+    assignees:
+      - "skitzo2000"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "frontend"
+
+  # Root-level Dockerfile (Dockerfile.node)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "skitzo2000"
+    assignees:
+      - "skitzo2000"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
 
   # GitHub Actions dependencies
   - package-ecosystem: "github-actions"
@@ -66,7 +140,6 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "09:00"
     open-pull-requests-limit: 5
     reviewers:
       - "skitzo2000"
@@ -78,4 +151,8 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
-      - "security"
+    # Group GitHub Actions updates together
+    groups:
+      github-actions:
+        patterns:
+          - "*"
