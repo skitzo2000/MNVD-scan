@@ -241,6 +241,38 @@ mnvd-scanner/
 └── README.md
 ```
 
+### Testing
+
+#### Automated Testing (CI/CD)
+
+The repository includes automated tests that run on every pull request:
+
+- **Docker Build Tests**: Validates that both backend and frontend Docker images build successfully
+- **Dependency Checks**: Verifies all critical dependencies are installed correctly
+- **Linting**: Runs ESLint on the frontend code to ensure code quality
+- **DAL Architecture Tests**: Validates the Data Access Layer initialization and functionality
+
+These tests run automatically via GitHub Actions when you create or update a pull request.
+
+#### Manual Testing
+
+For comprehensive local testing, run the full test suite:
+
+```bash
+# Start the application with Docker Compose
+docker compose up -d
+
+# Run all tests
+./tests/run-all-tests.sh
+```
+
+Individual test scripts are also available:
+- `./tests/test-api.sh` - API endpoint tests
+- `./tests/test-frontend.sh` - Frontend integration tests
+- `./tests/test-nal.js` - Notification Access Layer tests
+- `./tests/test-sal.js` - Scan Access Layer tests
+- `./tests/test-webhooks.js` - Webhook compatibility tests
+
 ## Architecture
 
 ### Data Access Layer (DAL)
