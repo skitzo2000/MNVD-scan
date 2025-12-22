@@ -1,13 +1,13 @@
 # Backend Dockerfile for NVD Scanner
-FROM node:25-slim AS base
+FROM node:22-slim AS base
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Install dependencies (production only)
+RUN npm ci --omit=dev
 
 # Verify critical dependencies are installed
 RUN node -e "require('dotenv'); require('express'); require('axios'); require('cors'); require('helmet'); console.log('All critical dependencies found')"
