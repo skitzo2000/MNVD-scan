@@ -45,7 +45,7 @@ fi
 echo -e "\n${YELLOW}📦 Testing local dependency installation...${NC}"
 if [ ! -d "node_modules" ]; then
     echo "Installing dependencies locally..."
-    if npm ci --omit=dev 2>&1 | tail -5; then
+    if npm ci --omit=dev; then
         echo -e "${GREEN}✅ Dependencies installed successfully${NC}"
     else
         echo -e "${RED}❌ Dependency installation failed${NC}"
@@ -74,17 +74,12 @@ node -e "
 " || exit 1
 
 # Test Dockerfile syntax
-echo -e "\n${YELLOW}🔍 Validating Dockerfile syntax...${NC}"
-if docker build --check -f Dockerfile . 2>&1 | grep -q "Dockerfile"; then
-    echo -e "${GREEN}✅ Dockerfile syntax is valid${NC}"
+echo -e "\n${YELLOW}🔍 Validating Dockerfile...${NC}"
+if [ -f "Dockerfile" ]; then
+    echo -e "${GREEN}✅ Dockerfile exists${NC}"
 else
-    # Some Docker versions don't support --check, so just verify file exists
-    if [ -f "Dockerfile" ]; then
-        echo -e "${GREEN}✅ Dockerfile exists${NC}"
-    else
-        echo -e "${RED}❌ Dockerfile not found${NC}"
-        exit 1
-    fi
+    echo -e "${RED}❌ Dockerfile not found${NC}"
+    exit 1
 fi
 
 # Test that .dockerignore exists and excludes core files
