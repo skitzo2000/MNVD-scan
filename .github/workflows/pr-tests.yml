@@ -90,6 +90,11 @@ jobs:
             });
           "
       
+      - name: Test Docker runtime
+        run: |
+          chmod +x tests/test-docker-runtime.sh
+          ./tests/test-docker-runtime.sh
+      
       - name: Comment on PR
         uses: actions/github-script@v7
         if: success()
@@ -100,5 +105,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '✅ **PR Tests Passed**\n\n- Backend Docker image built successfully\n- Frontend Docker image built successfully\n- Frontend linting passed\n- Backend dependencies verified\n- DAL architecture test passed'
+              body: '✅ **PR Tests Passed**\n\n- Backend Docker image built successfully\n- Frontend Docker image built successfully\n- Frontend linting passed\n- Backend dependencies verified\n- DAL architecture test passed\n- Docker runtime tests passed (containers start without errors)'
             })
