@@ -16,15 +16,15 @@
     "clean": "rm -rf .next out node_modules/.cache"
   },
   "dependencies": {
-    "next": "^16.1.0",
-    "react": "^19.1.1",
-    "react-dom": "^19.2.0",
-    "@mui/material": "^7.3.4",
-    "@mui/icons-material": "^7.3.4",
+    "next": "^16.1.1",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "@mui/material": "^7.3.6",
+    "@mui/icons-material": "^7.3.6",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@emotion/cache": "^11.14.0",
-    "axios": "^1.7.9",
+    "axios": "^1.13.2",
     "swr": "^2.3.8"
   },
   "devDependencies": {
