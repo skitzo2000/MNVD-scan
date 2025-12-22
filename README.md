@@ -307,14 +307,33 @@ The application features an advanced Scan Access Layer for managing vulnerabilit
 - **Testing**: Comprehensive test suite with API and integration tests
 - **Containerization**: Docker with multi-stage builds and rootless support
 
+### Docker Architecture
+
+The application uses separate Dockerfiles for optimal builds:
+
+- **`backend/Dockerfile`**: Backend Node.js service with Express API
+- **`frontend/Dockerfile`**: Frontend Next.js application with optimized production build
+- **`docker-compose.yml`**: Development environment with hot reload
+- **`docker-compose.production.yml`**: Production deployment using pre-built GHCR images
+
+**Important:** The repository structure has been updated. If you see any reference to a root-level `Dockerfile.node`, that file is obsolete and has been removed. Always use the Dockerfiles in the `backend/` and `frontend/` directories.
+
+**Docker Image Publishing:** 
+- GitHub Actions automatically builds and publishes images to GitHub Container Registry (GHCR)
+- Images are available at:
+  - `ghcr.io/skitzo2000/mnvd-scan-backend:latest`
+  - `ghcr.io/skitzo2000/mnvd-scan-frontend:latest`
+- For production, use `docker-compose.production.yml` which pulls pre-built images
+
 ### Adding New Features
 
 1. Backend features go in the `backend/` directory
 2. Frontend components go in `frontend/components/`
 3. Data operations go through the DAL in `backend/dal/`
-4. Update the Dockerfile if you add new dependencies
+4. Update the appropriate Dockerfile (`backend/Dockerfile` or `frontend/Dockerfile`) if you add new dependencies
 5. Test with Docker Compose before deploying
-6. Run the test suite to ensure compatibility
+6. Run the test suite to ensure compatibility: `./tests/run-all-tests.sh`
+7. CI/CD will automatically build and test Docker images on pull requests
 
 ## License
 

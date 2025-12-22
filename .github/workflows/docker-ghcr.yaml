@@ -85,10 +85,10 @@ jobs:
             });
           "
 
-      - name: Test API endpoints (if available)
+      - name: Test Docker runtime
         run: |
-          echo "API endpoint testing would require Docker Compose - skipping in CI"
-          echo "Full integration tests should be run locally with: ./tests/run-all-tests.sh"
+          chmod +x tests/test-docker-runtime.sh
+          ./tests/test-docker-runtime.sh
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
