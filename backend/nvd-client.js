@@ -22,6 +22,16 @@ function getApiKey() {
   return cachedApiKey;
 }
 
+// Basic API key format validation (should be UUID-like pattern)
+function isValidApiKeyFormat(apiKey) {
+  if (!apiKey || typeof apiKey !== 'string') {
+    return false;
+  }
+  // NVD API keys are typically UUIDs (8-4-4-4-12 format)
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidPattern.test(apiKey);
+}
+
 // Rate limiting: NVD API allows 50 requests per rolling 30-second window for authenticated users
 // We'll be conservative and limit to 40 requests per 30 seconds (1 request every 750ms)
 const RATE_LIMIT_DELAY = 750; // 750ms between requests for safety
@@ -417,5 +427,6 @@ module.exports = {
   fetchCompleteCPEInfo,
   isValidCPE,
   setApiKey,
-  getApiKey
+  getApiKey,
+  isValidApiKeyFormat
 };

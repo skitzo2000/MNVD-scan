@@ -11,6 +11,7 @@ const { initializeDatabase, getAllQueries, createQuery, deleteQuery, getStats, g
 const nvdClient = require('./nvd-client');
 const discordNotifier = require('./discord-notifier');
 const scanner = require('./scanner');
+const notificationService = require('./notification-service');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -342,23 +343,33 @@ app.post('/api/settings/test', async (req, res) => {
     // Test NVD API if key provided
     if (nvdApiKey && nvdApiKey !== '********') {
       try {
-        // Temporarily set API key for testing
-        const originalApiKey = process.env.NVD_API_KEY;
-        process.env.NVD_API_KEY = nvdApiKey;
-        
-        // Test with a simple query
-        const testResult = await nvdClient.fetchVulnerabilitiesByCPE('cpe:2.3:a:microsoft:edge:*:*:*:*:*:*:*:*', 0, 1);
-        
-        // Restore original API key
-        if (originalApiKey) {
-          process.env.NVD_API_KEY = originalApiKey;
+        // Validate API key format first
+        if (!nvdClient.isValidApiKeyFormat(nvdApiKey)) {
+          results.nvdApi.success = false;
+          results.nvdApi.message = 'Invalid API key format (expected UUID format)';
         } else {
-          delete process.env.NVD_API_KEY;
+          // Temporarily use the test API key without modifying global env
+          nvdClient.setApiKey(nvdApiKey, 'test');
+          
+          // Test with a simple query
+          const testResult = await nvdClient.fetchVulnerabilitiesByCPE('cpe:2.3:a:microsoft:edge:*:*:*:*:*:*:*:*', 0, 1);
+          
+          // Restore the original API key from database/env
+          const effectiveSettings = await getEffectiveSettings(dbInstance);
+          if (effectiveSettings.nvdApiKey) {
+            nvdClient.setApiKey(effectiveSettings.nvdApiKey, effectiveSettings.source.nvdApiKey);
+          }
+          
+          results.nvdApi.success = true;
+          results.nvdApi.message = 'API key is valid';
+        }
+      } catch (error) {
+        // Restore the original API key even if test fails
+        const effectiveSettings = await getEffectiveSettings(dbInstance);
+        if (effectiveSettings.nvdApiKey) {
+          nvdClient.setApiKey(effectiveSettings.nvdApiKey, effectiveSettings.source.nvdApiKey);
         }
         
-        results.nvdApi.success = true;
-        results.nvdApi.message = 'API key is valid';
-      } catch (error) {
         results.nvdApi.success = false;
         results.nvdApi.message = `API test failed: ${error.message}`;
       }
@@ -379,7 +390,6 @@ app.post('/api/settings/test', async (req, res) => {
           publishedDate: new Date().toISOString()
         };
         
-        const notificationService = require('./notification-service');
         const success = await notificationService.sendNotification(webhookUrl, testVulnerability);
         
         results.webhook.success = success;

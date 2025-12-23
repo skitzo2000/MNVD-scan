@@ -22,6 +22,9 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 
+// Constants
+const MASKED_VALUE = '********';
+
 const SettingsDialog = ({ open, onClose, onSettingsSaved }) => {
   const [settings, setSettings] = useState({
     nvdApiKey: '',
@@ -85,7 +88,7 @@ const SettingsDialog = ({ open, onClose, onSettingsSaved }) => {
       const updates = {};
       
       // Only send API key if it's been changed (not the masked value)
-      if (settings.nvdApiKey !== originalSettings.nvdApiKey && settings.nvdApiKey !== '********') {
+      if (settings.nvdApiKey !== originalSettings.nvdApiKey && settings.nvdApiKey !== MASKED_VALUE) {
         updates.nvdApiKey = settings.nvdApiKey;
       }
       
@@ -103,10 +106,8 @@ const SettingsDialog = ({ open, onClose, onSettingsSaved }) => {
         onSettingsSaved();
       }
       
-      // Reload settings to get updated values
-      setTimeout(() => {
-        loadSettings();
-      }, 1000);
+      // Reload settings immediately after successful save
+      await loadSettings();
     } catch (error) {
       console.error('Error saving settings:', error);
       setSaveMessage({ type: 'error', text: 'Failed to save settings' });
@@ -121,7 +122,7 @@ const SettingsDialog = ({ open, onClose, onSettingsSaved }) => {
     
     try {
       const testData = {
-        nvdApiKey: settings.nvdApiKey !== '********' ? settings.nvdApiKey : null,
+        nvdApiKey: settings.nvdApiKey !== MASKED_VALUE ? settings.nvdApiKey : null,
         webhookUrl: settings.webhookUrl || null
       };
       
@@ -185,7 +186,7 @@ const SettingsDialog = ({ open, onClose, onSettingsSaved }) => {
                 type={showApiKey ? 'text' : 'password'}
                 value={settings.nvdApiKey}
                 onChange={(e) => setSettings({ ...settings, nvdApiKey: e.target.value })}
-                placeholder={apiKeySet ? '********' : 'Enter your NVD API key'}
+                placeholder={apiKeySet ? MASKED_VALUE : 'Enter your NVD API key'}
                 helperText="Get your API key from https://nvd.nist.gov/developers/request-an-api-key"
                 InputProps={{
                   endAdornment: (
