@@ -12,6 +12,7 @@ import QueryCard from '../components/ui/QueryCard';
 import QueryList from '../components/ui/QueryList';
 import EmptyState from '../components/ui/EmptyState';
 import QueryForm from '../components/forms/QueryForm';
+import SettingsDialog from '../components/forms/SettingsDialog';
 import CVEDetailsDialog from '../components/ui/CVEDetailsDialog';
 import PerformanceMonitor from '../components/ui/PerformanceMonitor';
 
@@ -25,6 +26,7 @@ function App() {
   const { queriesWithStats, isLoading: queriesWithStatsLoading, mutate: mutateQueriesWithStats } = useQueriesWithStats();
   
   const [openDialog, setOpenDialog] = useState(false);
+  const [openSettingsDialog, setOpenSettingsDialog] = useState(false);
   const [openCVEDialog, setOpenCVEDialog] = useState(false);
   const [selectedQuery, setSelectedQuery] = useState(null);
   const [deletingQuery, setDeletingQuery] = useState(null);
@@ -71,6 +73,18 @@ function App() {
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
+  };
+
+  const handleOpenSettingsDialog = () => {
+    setOpenSettingsDialog(true);
+  };
+
+  const handleCloseSettingsDialog = () => {
+    setOpenSettingsDialog(false);
+  };
+
+  const handleSettingsSaved = () => {
+    showSnackbar('Settings saved successfully', 'success');
   };
 
   const handleCreateQuery = async (newQuery) => {
@@ -155,7 +169,7 @@ function App() {
   return (
     <Layout>
       <PerformanceMonitor />
-      <Header />
+      <Header onSettingsClick={handleOpenSettingsDialog} />
       
       {/* Stats Cards */}
       <StatsCards stats={stats} />
@@ -204,6 +218,13 @@ function App() {
         open={openDialog}
         onClose={handleCloseDialog}
         onSubmit={handleCreateQuery}
+      />
+
+      {/* Settings Dialog */}
+      <SettingsDialog
+        open={openSettingsDialog}
+        onClose={handleCloseSettingsDialog}
+        onSettingsSaved={handleSettingsSaved}
       />
 
       {/* CVE Details Dialog */}
