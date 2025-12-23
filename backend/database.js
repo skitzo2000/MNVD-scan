@@ -147,6 +147,29 @@ async function getQueryLastChecked(dal, queryId) {
   return new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
 }
 
+// Settings operations
+async function getSettings(dal) {
+  return await dal.getSettings();
+}
+
+async function updateSettings(dal, settings) {
+  return await dal.updateSettings(settings);
+}
+
+// Get effective settings (environment variables override database)
+async function getEffectiveSettings(dal) {
+  const dbSettings = await dal.getSettings();
+  
+  return {
+    nvdApiKey: process.env.NVD_API_KEY || dbSettings.nvdApiKey || null,
+    webhookUrl: process.env.DISCORD_WEBHOOK_URL || dbSettings.webhookUrl || null,
+    source: {
+      nvdApiKey: process.env.NVD_API_KEY ? 'environment' : (dbSettings.nvdApiKey ? 'database' : 'none'),
+      webhookUrl: process.env.DISCORD_WEBHOOK_URL ? 'environment' : (dbSettings.webhookUrl ? 'database' : 'none')
+    }
+  };
+}
+
 module.exports = {
   initializeDatabase,
   getAllQueries,
@@ -166,5 +189,8 @@ module.exports = {
   logScan,
   getQueryCVEStats,
   updateQueryLastChecked,
-  getQueryLastChecked
+  getQueryLastChecked,
+  getSettings,
+  updateSettings,
+  getEffectiveSettings
 };

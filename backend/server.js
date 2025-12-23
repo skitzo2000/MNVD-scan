@@ -7,10 +7,11 @@ const path = require('path');
 // const cron = require('node-cron'); // Temporarily disabled for debugging
 
 // Import our modules
-const { initializeDatabase, getAllQueries, createQuery, deleteQuery, getStats, getRecentNotifications, getQueryCVEStats, getCVEsForQuery } = require('./database');
+const { initializeDatabase, getAllQueries, createQuery, deleteQuery, getStats, getRecentNotifications, getQueryCVEStats, getCVEsForQuery, getSettings, updateSettings, getEffectiveSettings } = require('./database');
 const nvdClient = require('./nvd-client');
 const discordNotifier = require('./discord-notifier');
 const scanner = require('./scanner');
+const notificationService = require('./notification-service');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -261,6 +262,153 @@ app.get('/api/queries-with-stats', async (req, res) => {
   }
 });
 
+// Settings endpoints
+app.get('/api/settings', async (req, res) => {
+  try {
+    if (!dbInstance) {
+      return res.status(500).json({ error: 'Database not initialized' });
+    }
+    
+    const settings = await getSettings(dbInstance);
+    const effectiveSettings = await getEffectiveSettings(dbInstance);
+    
+    // Mask the API key if it exists
+    const maskedSettings = {
+      nvdApiKey: settings.nvdApiKey ? '********' : null,
+      nvdApiKeySet: !!settings.nvdApiKey,
+      webhookUrl: settings.webhookUrl,
+      webhookUrlSet: !!settings.webhookUrl,
+      effectiveSource: effectiveSettings.source,
+      updatedAt: settings.updatedAt
+    };
+    
+    res.json(maskedSettings);
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+    res.status(500).json({ error: 'Failed to fetch settings' });
+  }
+});
+
+app.put('/api/settings', async (req, res) => {
+  try {
+    if (!dbInstance) {
+      return res.status(500).json({ error: 'Database not initialized' });
+    }
+    
+    const { nvdApiKey, webhookUrl } = req.body;
+    
+    // Build update object (only include fields that are provided)
+    const updates = {};
+    
+    if (nvdApiKey !== undefined) {
+      // Only update if not empty or explicitly clearing
+      if (nvdApiKey === null || nvdApiKey === '') {
+        updates.nvdApiKey = null;
+      } else if (nvdApiKey !== '********') {
+        // Don't update if it's the masked placeholder
+        updates.nvdApiKey = nvdApiKey;
+      }
+    }
+    
+    if (webhookUrl !== undefined) {
+      updates.webhookUrl = webhookUrl || null;
+    }
+    
+    const updatedSettings = await updateSettings(dbInstance, updates);
+    
+    // Return masked response
+    const maskedSettings = {
+      nvdApiKey: updatedSettings.nvdApiKey ? '********' : null,
+      nvdApiKeySet: !!updatedSettings.nvdApiKey,
+      webhookUrl: updatedSettings.webhookUrl,
+      webhookUrlSet: !!updatedSettings.webhookUrl,
+      updatedAt: updatedSettings.updatedAt
+    };
+    
+    res.json(maskedSettings);
+  } catch (error) {
+    console.error('Error updating settings:', error);
+    res.status(500).json({ error: 'Failed to update settings' });
+  }
+});
+
+app.post('/api/settings/test', async (req, res) => {
+  try {
+    const { nvdApiKey, webhookUrl } = req.body;
+    const results = {
+      nvdApi: { success: false, message: '' },
+      webhook: { success: false, message: '' }
+    };
+    
+    // Test NVD API if key provided
+    if (nvdApiKey && nvdApiKey !== '********') {
+      try {
+        // Validate API key format first
+        if (!nvdClient.isValidApiKeyFormat(nvdApiKey)) {
+          results.nvdApi.success = false;
+          results.nvdApi.message = 'Invalid API key format (expected UUID format)';
+        } else {
+          // Temporarily use the test API key without modifying global env
+          nvdClient.setApiKey(nvdApiKey, 'test');
+          
+          // Test with a simple query
+          const testResult = await nvdClient.fetchVulnerabilitiesByCPE('cpe:2.3:a:microsoft:edge:*:*:*:*:*:*:*:*', 0, 1);
+          
+          // Restore the original API key from database/env
+          const effectiveSettings = await getEffectiveSettings(dbInstance);
+          if (effectiveSettings.nvdApiKey) {
+            nvdClient.setApiKey(effectiveSettings.nvdApiKey, effectiveSettings.source.nvdApiKey);
+          }
+          
+          results.nvdApi.success = true;
+          results.nvdApi.message = 'API key is valid';
+        }
+      } catch (error) {
+        // Restore the original API key even if test fails
+        const effectiveSettings = await getEffectiveSettings(dbInstance);
+        if (effectiveSettings.nvdApiKey) {
+          nvdClient.setApiKey(effectiveSettings.nvdApiKey, effectiveSettings.source.nvdApiKey);
+        }
+        
+        results.nvdApi.success = false;
+        results.nvdApi.message = `API test failed: ${error.message}`;
+      }
+    } else {
+      results.nvdApi.message = 'No API key provided to test';
+    }
+    
+    // Test webhook if URL provided
+    if (webhookUrl) {
+      try {
+        const testVulnerability = {
+          cveId: 'TEST-2024-0000',
+          description: 'This is a test notification from MNVD Settings',
+          severity: 'LOW',
+          cvssScore: 0.0,
+          nvdUrl: 'https://nvd.nist.gov',
+          cpeMatch: 'test:webhook',
+          publishedDate: new Date().toISOString()
+        };
+        
+        const success = await notificationService.sendNotification(webhookUrl, testVulnerability);
+        
+        results.webhook.success = success;
+        results.webhook.message = success ? 'Webhook test notification sent successfully' : 'Failed to send webhook test notification';
+      } catch (error) {
+        results.webhook.success = false;
+        results.webhook.message = `Webhook test failed: ${error.message}`;
+      }
+    } else {
+      results.webhook.message = 'No webhook URL provided to test';
+    }
+    
+    res.json(results);
+  } catch (error) {
+    console.error('Error testing settings:', error);
+    res.status(500).json({ error: 'Failed to test settings', details: error.message });
+  }
+});
+
 // Catch-all handler for frontend routes - handled by nginx in production
 // app.get('*', (req, res) => {
 //   res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
@@ -288,6 +436,23 @@ async function startServer() {
 
     // Store db instance for use in routes
     app.locals.db = dbInstance;
+    
+    // Load settings from database and set API key in nvd-client
+    try {
+      const effectiveSettings = await getEffectiveSettings(dbInstance);
+      if (effectiveSettings.nvdApiKey) {
+        nvdClient.setApiKey(effectiveSettings.nvdApiKey, effectiveSettings.source.nvdApiKey);
+        console.log(`NVD API key loaded from ${effectiveSettings.source.nvdApiKey}`);
+      } else {
+        console.warn('No NVD API key configured. API calls may be rate-limited.');
+      }
+      
+      if (effectiveSettings.webhookUrl) {
+        console.log(`Webhook URL configured from ${effectiveSettings.source.webhookUrl}`);
+      }
+    } catch (error) {
+      console.error('Failed to load settings:', error);
+    }
 
     // Temporarily disable scheduled scans for development/testing
     console.log('Scheduled scans disabled for development/testing');

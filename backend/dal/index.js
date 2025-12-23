@@ -9,6 +9,7 @@ class DataAccessLayer {
     this.cvesFile = path.join(dataDir, 'cves.json');
     this.scansFile = path.join(dataDir, 'scans.json');
     this.notificationsFile = path.join(dataDir, 'notifications.json');
+    this.settingsFile = path.join(dataDir, 'settings.json');
   }
 
   async initialize() {
@@ -44,7 +45,14 @@ class DataAccessLayer {
         }
       },
 
-      [this.notificationsFile]: [] // DAL expects direct array
+      [this.notificationsFile]: [], // DAL expects direct array
+      
+      [this.settingsFile]: { // Settings storage
+        nvdApiKey: null,
+        webhookUrl: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
 
     };
 
@@ -211,6 +219,34 @@ class DataAccessLayer {
       totalNotifications: notifications.length,
       lastScan: scans.length > 0 ? scans[scans.length - 1].timestamp : null
     };
+  }
+
+  // Settings operations
+  async getSettings() {
+    const data = await this.readFile(this.settingsFile);
+    return data || {
+      nvdApiKey: null,
+      webhookUrl: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+  }
+
+  async updateSettings(settings) {
+    const currentSettings = await this.getSettings();
+    const updatedSettings = {
+      ...currentSettings,
+      ...settings,
+      updatedAt: new Date().toISOString()
+    };
+    
+    // Ensure we don't lose the createdAt timestamp
+    if (!updatedSettings.createdAt) {
+      updatedSettings.createdAt = new Date().toISOString();
+    }
+    
+    await this.writeFile(this.settingsFile, updatedSettings);
+    return updatedSettings;
   }
 }
 

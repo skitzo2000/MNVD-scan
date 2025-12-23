@@ -3,7 +3,34 @@
 const axios = require('axios');
 
 const NVD_API_BASE_URL = 'https://services.nvd.nist.gov/rest/json/cves/2.0';
-const API_KEY = process.env.NVD_API_KEY;
+
+// Dynamic API key retrieval
+let cachedApiKey = null;
+let apiKeySource = 'environment';
+
+function setApiKey(key, source = 'database') {
+  cachedApiKey = key;
+  apiKeySource = source;
+}
+
+function getApiKey() {
+  // Environment variable takes precedence
+  if (process.env.NVD_API_KEY) {
+    return process.env.NVD_API_KEY;
+  }
+  // Fall back to cached key from database
+  return cachedApiKey;
+}
+
+// Basic API key format validation (should be UUID-like pattern)
+function isValidApiKeyFormat(apiKey) {
+  if (!apiKey || typeof apiKey !== 'string') {
+    return false;
+  }
+  // NVD API keys are typically UUIDs (8-4-4-4-12 format)
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidPattern.test(apiKey);
+}
 
 // Rate limiting: NVD API allows 50 requests per rolling 30-second window for authenticated users
 // We'll be conservative and limit to 40 requests per 30 seconds (1 request every 750ms)
@@ -12,14 +39,17 @@ let lastRequestTime = 0;
 let requestCount = 0;
 let windowStartTime = Date.now();
 
-// Axios instance with default configuration
-const apiClient = axios.create({
-  timeout: 30000, // 30 seconds
-  headers: {
-    'User-Agent': 'MNVD-Scanner/1.0.0'
-    // Temporarily disabled API key: ...(API_KEY && { 'apiKey': API_KEY })
-  }
-});
+// Function to create axios instance with current API key
+function createApiClient() {
+  const apiKey = getApiKey();
+  return axios.create({
+    timeout: 30000, // 30 seconds
+    headers: {
+      'User-Agent': 'MNVD-Scanner/1.0.0',
+      ...(apiKey && { 'apiKey': apiKey })
+    }
+  });
+}
 
 // Rate limiting function
 async function enforceRateLimit() {
@@ -66,6 +96,7 @@ async function fetchVulnerabilitiesByCPE(cpeId, startIndex = 0, resultsPerPage =
 
     console.log(`Fetching vulnerabilities for CPE: ${cpeId} (startIndex: ${startIndex})`);
 
+    const apiClient = createApiClient();
     const response = await apiClient.get(NVD_API_BASE_URL, { params });
 
     if (response.status !== 200) {
@@ -194,6 +225,7 @@ async function fetchRecentVulnerabilitiesByCPE(cpeId, days = 7, retryCount = 0) 
 
     console.log(`Fetching recent vulnerabilities for CPE: ${cpeId} (last ${days} days)`);
 
+    const apiClient = createApiClient();
     const response = await apiClient.get(NVD_API_BASE_URL, { params });
 
     if (response.status !== 200) {
@@ -273,6 +305,7 @@ async function fetchVulnerabilitiesModifiedSince(cpeId, lastCheckDate, retryCoun
 
     console.log(`Fetching vulnerabilities published in last ${finalDaysBack} days for CPE: ${cpeId} ${isFirstQuery ? '(first query - min 90 days)' : '(recent check - 7 days max)'}`);
 
+    const apiClient = createApiClient();
     const response = await apiClient.get(NVD_API_BASE_URL, { params });
 
     if (response.status !== 200) {
@@ -392,5 +425,8 @@ module.exports = {
   fetchRecentVulnerabilitiesByCPE,
   fetchVulnerabilitiesModifiedSince,
   fetchCompleteCPEInfo,
-  isValidCPE
+  isValidCPE,
+  setApiKey,
+  getApiKey,
+  isValidApiKeyFormat
 };
