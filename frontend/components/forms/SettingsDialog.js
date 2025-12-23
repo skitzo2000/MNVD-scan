@@ -9,17 +9,8 @@ import {
   Alert,
   Box,
   Typography,
-  CircularProgress,
-  InputAdornment,
-  IconButton,
-  Chip
+  CircularProgress
 } from '@mui/material';
-import {
-  Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon,
-  CheckCircle as CheckCircleIcon,
-  Error as ErrorIcon
-} from '@mui/icons-material';
 import axios from 'axios';
 
 // Constants
@@ -33,7 +24,6 @@ const SettingsDialog = ({ open, onClose, onSettingsSaved }) => {
   const [originalSettings, setOriginalSettings] = useState({});
   const [loading, setLoading] = useState(false);
   const [testing, setTesting] = useState(false);
-  const [showApiKey, setShowApiKey] = useState(false);
   const [testResults, setTestResults] = useState(null);
   const [saveMessage, setSaveMessage] = useState(null);
   const [apiKeySet, setApiKeySet] = useState(false);
@@ -76,7 +66,6 @@ const SettingsDialog = ({ open, onClose, onSettingsSaved }) => {
     setSettings({ nvdApiKey: '', webhookUrl: '' });
     setTestResults(null);
     setSaveMessage(null);
-    setShowApiKey(false);
     onClose();
   };
 
@@ -139,24 +128,11 @@ const SettingsDialog = ({ open, onClose, onSettingsSaved }) => {
     }
   };
 
-  const toggleShowApiKey = () => {
-    setShowApiKey(!showApiKey);
-  };
-
-  const getSourceChip = (source) => {
-    if (source === 'environment') {
-      return <Chip label="From Environment" size="small" color="primary" sx={{ ml: 1 }} />;
-    } else if (source === 'database') {
-      return <Chip label="From Database" size="small" color="secondary" sx={{ ml: 1 }} />;
-    }
-    return null;
-  };
-
   return (
     <Dialog 
       open={open} 
       onClose={handleClose} 
-      maxWidth="md" 
+      maxWidth="sm" 
       fullWidth
       disableScrollLock={true}
     >
@@ -168,68 +144,41 @@ const SettingsDialog = ({ open, onClose, onSettingsSaved }) => {
           </Box>
         ) : (
           <>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            <Alert severity="info" sx={{ mb: 2 }}>
               Configure your NVD API key and webhook URL. Environment variables will override these settings.
-            </Typography>
+            </Alert>
 
-            {/* NVD API Key */}
-            <Box sx={{ mb: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Typography variant="subtitle2">
-                  NVD API Key (Required)
-                </Typography>
-                {getSourceChip(effectiveSource.nvdApiKey)}
-              </Box>
-              <TextField
-                fullWidth
-                variant="outlined"
-                type={showApiKey ? 'text' : 'password'}
-                value={settings.nvdApiKey}
-                onChange={(e) => setSettings({ ...settings, nvdApiKey: e.target.value })}
-                placeholder={apiKeySet ? MASKED_VALUE : 'Enter your NVD API key'}
-                helperText="Get your API key from https://nvd.nist.gov/developers/request-an-api-key"
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={toggleShowApiKey}
-                        edge="end"
-                      >
-                        {showApiKey ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                      </IconButton>
-                    </InputAdornment>
-                  )
-                }}
-              />
-            </Box>
+            <TextField
+              margin="dense"
+              label="NVD API Key (Required)"
+              fullWidth
+              variant="outlined"
+              type="password"
+              value={settings.nvdApiKey}
+              onChange={(e) => setSettings({ ...settings, nvdApiKey: e.target.value })}
+              placeholder={apiKeySet ? MASKED_VALUE : 'Enter your NVD API key'}
+              helperText={`Get your API key from https://nvd.nist.gov/developers/request-an-api-key${effectiveSource.nvdApiKey === 'environment' ? ' (Currently using environment variable)' : ''}`}
+              sx={{ mb: 2 }}
+            />
 
-            {/* Webhook URL */}
-            <Box sx={{ mb: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Typography variant="subtitle2">
-                  Webhook URL (Optional)
-                </Typography>
-                {getSourceChip(effectiveSource.webhookUrl)}
-              </Box>
-              <TextField
-                fullWidth
-                variant="outlined"
-                value={settings.webhookUrl}
-                onChange={(e) => setSettings({ ...settings, webhookUrl: e.target.value })}
-                placeholder="https://discord.com/api/webhooks/... or Teams webhook"
-                helperText="Discord or Microsoft Teams webhook URL for notifications"
-              />
-            </Box>
+            <TextField
+              margin="dense"
+              label="Webhook URL (Optional)"
+              fullWidth
+              variant="outlined"
+              value={settings.webhookUrl}
+              onChange={(e) => setSettings({ ...settings, webhookUrl: e.target.value })}
+              placeholder="https://discord.com/api/webhooks/... or Teams webhook"
+              helperText={`Discord or Microsoft Teams webhook URL for notifications${effectiveSource.webhookUrl === 'environment' ? ' (Currently using environment variable)' : ''}`}
+              sx={{ mb: 2 }}
+            />
 
             {/* Test Results */}
             {testResults && (
               <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>Test Results</Typography>
-                
                 {testResults.nvdApi && (
                   <Alert 
                     severity={testResults.nvdApi.success ? 'success' : 'error'} 
-                    icon={testResults.nvdApi.success ? <CheckCircleIcon /> : <ErrorIcon />}
                     sx={{ mb: 1 }}
                   >
                     <strong>NVD API:</strong> {testResults.nvdApi.message}
@@ -238,8 +187,7 @@ const SettingsDialog = ({ open, onClose, onSettingsSaved }) => {
                 
                 {testResults.webhook && (
                   <Alert 
-                    severity={testResults.webhook.success ? 'success' : 'info'} 
-                    icon={testResults.webhook.success ? <CheckCircleIcon /> : <ErrorIcon />}
+                    severity={testResults.webhook.success ? 'success' : 'info'}
                   >
                     <strong>Webhook:</strong> {testResults.webhook.message}
                   </Alert>
@@ -260,7 +208,6 @@ const SettingsDialog = ({ open, onClose, onSettingsSaved }) => {
         <Button onClick={handleTest} disabled={loading || testing}>
           {testing ? <CircularProgress size={20} /> : 'Test Connection'}
         </Button>
-        <Box sx={{ flex: 1 }} />
         <Button onClick={handleClose}>Cancel</Button>
         <Button
           onClick={handleSave}
