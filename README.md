@@ -89,6 +89,104 @@ For production deployment using pre-built images from GHCR:
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:3001
 
+## Version-Specific Deployments
+
+MNVD-scan supports multiple Docker image versions to allow running different versions simultaneously or pinning to specific releases.
+
+### Available Image Tags
+
+Docker images are published to GitHub Container Registry (GHCR) with multiple tags:
+
+- `latest` - Always points to the most recent build from the main branch
+- `v{major}.{minor}.{patch}` - Specific version tags (e.g., `v1.0.0`, `v1.2.3`)
+- `{commit-sha}` - 7-character commit SHA for specific commits
+
+### Using Specific Versions
+
+1. **Using the versioned docker-compose file**
+   ```bash
+   # Use a specific version
+   IMAGE_TAG=v1.0.0 docker compose -f docker-compose.versioned.yml up -d
+   
+   # Or add IMAGE_TAG to your .env file
+   echo "IMAGE_TAG=v1.0.0" >> .env
+   docker compose -f docker-compose.versioned.yml up -d
+   ```
+
+2. **Manually specify image versions in docker-compose.production.yml**
+   Edit the file to use specific tags:
+   ```yaml
+   backend:
+     image: ghcr.io/skitzo2000/mnvd-scan-backend:v1.0.0
+   frontend:
+     image: ghcr.io/skitzo2000/mnvd-scan-frontend:v1.0.0
+   ```
+
+3. **Using docker run directly**
+   ```bash
+   # Run backend with specific version
+   docker run -d \
+     --name mnvd-backend \
+     -e NVD_API_KEY=your_key \
+     ghcr.io/skitzo2000/mnvd-scan-backend:v1.0.0
+   
+   # Run frontend with specific version
+   docker run -d \
+     --name mnvd-frontend \
+     -p 3000:3000 \
+     -e BACKEND_URL=http://backend:3000 \
+     ghcr.io/skitzo2000/mnvd-scan-frontend:v1.0.0
+   ```
+
+### Creating New Versions
+
+For maintainers creating new releases:
+
+1. **Using the version management script**
+   ```bash
+   # Check current version
+   ./version.sh current
+   
+   # Bump version (automatically updates package.json files)
+   ./version.sh bump patch   # 1.0.0 -> 1.0.1
+   ./version.sh bump minor   # 1.0.0 -> 1.1.0
+   ./version.sh bump major   # 1.0.0 -> 2.0.0
+   
+   # Or create a specific version tag
+   ./version.sh tag v2.0.0
+   
+   # List all version tags
+   ./version.sh list
+   ```
+
+2. **Manual tagging**
+   ```bash
+   # Update version in package.json files
+   # Edit package.json, backend/package.json, frontend/package.json
+   
+   # Commit and tag
+   git add package.json backend/package.json frontend/package.json
+   git commit -m "chore: bump version to v1.0.0"
+   git tag -a v1.0.0 -m "Release v1.0.0"
+   git push origin main
+   git push origin v1.0.0
+   ```
+
+3. **Automated build and publish**
+   Pushing a version tag triggers the GitHub Actions workflow to:
+   - Build both frontend and backend images
+   - Push images with the version tag (e.g., `v1.0.0`)
+   - Push images with the commit SHA
+   - Keep `latest` pointing to main branch builds only
+
+### Version Pinning Best Practices
+
+- **Production**: Pin to specific version tags (e.g., `v1.0.0`) for stability
+- **Development**: Use `latest` to always get newest features
+- **Testing**: Use commit SHAs for reproducible testing
+- **Rollback**: Keep previous version tags available for quick rollback
+
+
 ## Manual Installation
 
 1. **Install dependencies**
