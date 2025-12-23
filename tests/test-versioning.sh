@@ -43,11 +43,16 @@ echo ""
 
 # Test 4: docker-compose.versioned.yml is valid YAML
 echo "Test 4: docker-compose.versioned.yml is valid YAML"
-if command -v docker &> /dev/null && command -v docker-compose &> /dev/null; then
-    if docker compose -f "$ROOT_DIR/docker-compose.versioned.yml" config > /dev/null 2>&1; then
-        echo "✓ docker-compose.versioned.yml is valid"
+if command -v docker &> /dev/null; then
+    # Try modern docker compose subcommand first
+    if docker compose version &> /dev/null 2>&1; then
+        if docker compose -f "$ROOT_DIR/docker-compose.versioned.yml" config > /dev/null 2>&1; then
+            echo "✓ docker-compose.versioned.yml is valid"
+        else
+            echo "⚠ docker-compose.versioned.yml validation failed (expected without env vars)"
+        fi
     else
-        echo "⚠ docker-compose.versioned.yml validation failed (expected without env vars)"
+        echo "⚠ Docker Compose not available, skipping validation"
     fi
 else
     echo "⚠ Docker not available, skipping validation"
