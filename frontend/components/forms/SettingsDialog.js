@@ -9,8 +9,11 @@ import {
   Alert,
   Box,
   Typography,
-  CircularProgress
+  CircularProgress,
+  InputAdornment,
+  IconButton
 } from '@mui/material';
+import { Lock as LockIcon, LockOpen as LockOpenIcon } from '@mui/icons-material';
 import axios from 'axios';
 
 // Constants
@@ -28,6 +31,7 @@ const SettingsDialog = ({ open, onClose, onSettingsSaved }) => {
   const [saveMessage, setSaveMessage] = useState(null);
   const [apiKeySet, setApiKeySet] = useState(false);
   const [effectiveSource, setEffectiveSource] = useState({});
+  const [apiKeyLocked, setApiKeyLocked] = useState(true);
 
   useEffect(() => {
     if (open) {
@@ -66,6 +70,7 @@ const SettingsDialog = ({ open, onClose, onSettingsSaved }) => {
     setSettings({ nvdApiKey: '', webhookUrl: '' });
     setTestResults(null);
     setSaveMessage(null);
+    setApiKeyLocked(true);
     onClose();
   };
 
@@ -97,6 +102,8 @@ const SettingsDialog = ({ open, onClose, onSettingsSaved }) => {
       
       // Reload settings immediately after successful save
       await loadSettings();
+      // Lock the API key field after save
+      setApiKeyLocked(true);
     } catch (error) {
       console.error('Error saving settings:', error);
       setSaveMessage({ type: 'error', text: 'Failed to save settings' });
@@ -128,6 +135,14 @@ const SettingsDialog = ({ open, onClose, onSettingsSaved }) => {
     }
   };
 
+  const toggleApiKeyLock = () => {
+    if (apiKeyLocked) {
+      // Unlocking - clear the field so user can enter new key
+      setSettings({ ...settings, nvdApiKey: '' });
+    }
+    setApiKeyLocked(!apiKeyLocked);
+  };
+
   return (
     <Dialog 
       open={open} 
@@ -154,11 +169,25 @@ const SettingsDialog = ({ open, onClose, onSettingsSaved }) => {
               fullWidth
               variant="outlined"
               type="password"
-              value={settings.nvdApiKey}
+              value={apiKeyLocked && apiKeySet ? MASKED_VALUE : settings.nvdApiKey}
               onChange={(e) => setSettings({ ...settings, nvdApiKey: e.target.value })}
               placeholder={apiKeySet ? MASKED_VALUE : 'Enter your NVD API key'}
               helperText={`Get your API key from https://nvd.nist.gov/developers/request-an-api-key${effectiveSource.nvdApiKey === 'environment' ? ' (Currently using environment variable)' : ''}`}
+              disabled={apiKeyLocked && apiKeySet}
               sx={{ mb: 2 }}
+              InputProps={{
+                endAdornment: apiKeySet ? (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={toggleApiKeyLock}
+                      edge="end"
+                      aria-label={apiKeyLocked ? 'unlock api key' : 'lock api key'}
+                    >
+                      {apiKeyLocked ? <LockIcon /> : <LockOpenIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ) : null
+              }}
             />
 
             <TextField
@@ -206,7 +235,7 @@ const SettingsDialog = ({ open, onClose, onSettingsSaved }) => {
       </DialogContent>
       <DialogActions>
         <Button onClick={handleTest} disabled={loading || testing}>
-          {testing ? <CircularProgress size={20} /> : 'Test Connection'}
+          {testing ? <CircularProgress size={20} /> : 'Test Webhook'}
         </Button>
         <Button onClick={handleClose}>Cancel</Button>
         <Button
