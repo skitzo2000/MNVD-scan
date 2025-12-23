@@ -72,31 +72,46 @@ bump_version() {
     echo "$new_version"
 }
 
+update_package_version_file() {
+    local file_path=$1
+    local new_version=$2
+    local file_name=$3
+    
+    if [ -f "$file_path" ]; then
+        sed -i.bak "s/\"version\": *\"[^\"]*\"/\"version\": \"$new_version\"/" "$file_path"
+        rm -f "$file_path.bak"
+        echo -e "${GREEN}✓ Updated $file_name${NC}"
+        return 0
+    else
+        return 1
+    fi
+}
+
 update_package_versions() {
     local new_version=$1
     
     echo -e "${BLUE}Updating package.json files...${NC}"
     
+    # Track which files were updated for git add
+    local updated_files=()
+    
     # Update root package.json
-    if [ -f "$ROOT_DIR/package.json" ]; then
-        sed -i.bak "s/\"version\": *\"[^\"]*\"/\"version\": \"$new_version\"/" "$ROOT_DIR/package.json"
-        rm -f "$ROOT_DIR/package.json.bak"
-        echo -e "${GREEN}✓ Updated root package.json${NC}"
+    if update_package_version_file "$ROOT_DIR/package.json" "$new_version" "root package.json"; then
+        updated_files+=("package.json")
     fi
     
     # Update backend package.json
-    if [ -f "$ROOT_DIR/backend/package.json" ]; then
-        sed -i.bak "s/\"version\": *\"[^\"]*\"/\"version\": \"$new_version\"/" "$ROOT_DIR/backend/package.json"
-        rm -f "$ROOT_DIR/backend/package.json.bak"
-        echo -e "${GREEN}✓ Updated backend/package.json${NC}"
+    if update_package_version_file "$ROOT_DIR/backend/package.json" "$new_version" "backend/package.json"; then
+        updated_files+=("backend/package.json")
     fi
     
     # Update frontend package.json
-    if [ -f "$ROOT_DIR/frontend/package.json" ]; then
-        sed -i.bak "s/\"version\": *\"[^\"]*\"/\"version\": \"$new_version\"/" "$ROOT_DIR/frontend/package.json"
-        rm -f "$ROOT_DIR/frontend/package.json.bak"
-        echo -e "${GREEN}✓ Updated frontend/package.json${NC}"
+    if update_package_version_file "$ROOT_DIR/frontend/package.json" "$new_version" "frontend/package.json"; then
+        updated_files+=("frontend/package.json")
     fi
+    
+    # Return the list of updated files
+    echo "${updated_files[@]}"
 }
 
 create_tag() {
@@ -111,8 +126,14 @@ create_tag() {
     # Extract version without 'v' prefix
     local version_number=${version#v}
     
-    # Update package.json files
-    update_package_versions "$version_number"
+    # Update package.json files and get list of updated files
+    local updated_files=($(update_package_versions "$version_number"))
+    
+    # Check if any files were updated
+    if [ ${#updated_files[@]} -eq 0 ]; then
+        echo -e "${RED}Error: No package.json files found to update${NC}" >&2
+        exit 1
+    fi
     
     # Check if tag already exists
     if git rev-parse "$version" >/dev/null 2>&1; then
@@ -120,9 +141,9 @@ create_tag() {
         exit 1
     fi
     
-    # Commit version changes
+    # Commit version changes - only add files that were actually updated
     echo -e "${BLUE}Committing version changes...${NC}"
-    git add package.json backend/package.json frontend/package.json
+    git add "${updated_files[@]}"
     git commit -m "chore: bump version to $version"
     
     # Create and push tag
