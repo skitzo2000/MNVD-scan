@@ -19,3 +19,9 @@ NODE_ENV=production
 # If not set, containers will run as root (not recommended for production)
 USER_ID=1000
 GROUP_ID=1000
+
+# Docker Image Version (optional - for versioned deployments)
+# Specify a version tag to use a specific release
+# Examples: latest, v1.0.0, v1.2.3, or a commit SHA
+# Default: latest
+# IMAGE_TAG=latest

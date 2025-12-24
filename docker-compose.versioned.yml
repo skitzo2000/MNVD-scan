@@ -1,0 +1,54 @@
+# MNVD Versioned Docker Compose - Use specific image versions
+# Usage: 
+#   IMAGE_TAG=v1.0.0 docker compose -f docker-compose.versioned.yml up -d
+#   or set IMAGE_TAG in your .env file
+
+services:
+  backend:
+    image: ghcr.io/skitzo2000/mnvd-scan-backend:${IMAGE_TAG:-latest}
+    environment:
+      - NODE_ENV=production
+      - NVD_API_KEY=${NVD_API_KEY}
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+      - PORT=3000
+      - USER_ID=${USER_ID:-1000}
+      - GROUP_ID=${GROUP_ID:-1000}
+    volumes:
+      - nvd_data:/app/data:rw
+    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - mnvd-network
+
+  frontend:
+    image: ghcr.io/skitzo2000/mnvd-scan-frontend:${IMAGE_TAG:-latest}
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - BACKEND_URL=http://backend:3000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - mnvd-network
+    depends_on:
+      - backend
+
+networks:
+  mnvd-network:
+    driver: bridge
+
+volumes:
+  nvd_data:
+    driver: local
