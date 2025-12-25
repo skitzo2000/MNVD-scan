@@ -1,6 +1,6 @@
 {
   "name": "mnvd-scanner-backend",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Backend for MNVD Scanner",
   "main": "server.js",
   "scripts": {

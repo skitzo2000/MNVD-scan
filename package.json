@@ -1,6 +1,6 @@
 {
   "name": "mnvd",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MNVD - Monitor National Vulnerability Database with Discord notifications",
   "_nvd_attribution": "This product uses the NVD API but is not endorsed or certified by the NVD.",
   "private": true,
