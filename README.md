@@ -271,14 +271,61 @@ If you need notifications sent to multiple Discord channels:
 | `TEAMS_WEBHOOK_URL` | Microsoft Teams webhook URL | No (can be set per query) |
 | `PORT` | Server port (default: 3000) | No |
 | `DATA_DIR` | JSON file storage directory (default: ./data) | No |
+| `API_KEY` | API key for backend authentication | Recommended |
+| `CORS_ORIGIN` | Allowed CORS origin (default: `http://frontend:3000`) | No |
+| `WEBHOOK_ENCRYPTION_KEY` | AES-256 key for webhook URL encryption (64 hex chars) | Recommended |
 
-## Security Best Practices
+## Security
+
+### Deployment Context
+
+MNVD-scan is designed for **trusted-network deployment only** (VPN, Tailnet, LAN). It is **not intended for public internet exposure** for the following reasons:
+
+- **Single-tenant design** — there is no multi-user account system, no RBAC, and no session management. The app assumes a single trusted operator.
+- **Static API key authentication** — the backend uses a shared API key rather than per-user credentials. This is appropriate for a private network but insufficient for public access.
+- **No built-in TLS termination** — the app serves HTTP. TLS must be provided by the network layer (e.g., Tailscale HTTPS, reverse proxy). On a public network, all traffic including the API key would be transmitted in cleartext.
+- **JSON file storage** — data is stored in plaintext JSON files on disk. There is no database-level access control or audit logging.
+
+If you need to expose this app beyond a trusted network, place it behind an authenticating reverse proxy with TLS termination and restrict access at the network level.
+
+### Authentication
+
+All API endpoints (except `/api/health`) require an `X-API-Key` header matching the `API_KEY` environment variable. If `API_KEY` is not set, authentication is disabled.
+
+Generate a key:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+### Webhook URL Encryption
+
+Webhook URLs stored in `data/webhooks.json` are encrypted at rest using AES-256-GCM when `WEBHOOK_ENCRYPTION_KEY` is set. Existing plaintext URLs are automatically encrypted on the next write operation.
+
+Generate an encryption key:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+### Security Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `API_KEY` | API key for backend authentication | Recommended |
+| `CORS_ORIGIN` | Allowed CORS origin (default: `http://frontend:3000`) | No |
+| `WEBHOOK_ENCRYPTION_KEY` | AES-256 key for webhook URL encryption (64 hex chars) | Recommended |
+
+### Best Practices
 
 - Store API keys securely using environment variables
-- Use HTTPS in production
-- Regularly rotate API keys
+- Regularly rotate `API_KEY` and `WEBHOOK_ENCRYPTION_KEY`
 - Monitor application logs for security issues
 - Keep dependencies updated (automated via [Dependabot](docs/DEPENDABOT.md))
+
+### Future Improvements
+
+The following items are tracked for future work:
+- Structured logging with log levels and centralized output
+- Data migration system for JSON schema changes
 
 ## Troubleshooting
 

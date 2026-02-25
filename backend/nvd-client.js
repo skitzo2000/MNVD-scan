@@ -14,10 +14,10 @@ let windowStartTime = Date.now();
 
 // Axios instance with default configuration
 const apiClient = axios.create({
-  timeout: 30000, // 30 seconds
+  timeout: 30000,
   headers: {
-    'User-Agent': 'MNVD-Scanner/1.0.0'
-    // Temporarily disabled API key: ...(API_KEY && { 'apiKey': API_KEY })
+    'User-Agent': 'MNVD-Scanner/1.0.0',
+    ...(API_KEY && { 'apiKey': API_KEY }),
   }
 });
 

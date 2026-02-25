@@ -12,12 +12,57 @@ const nvdClient = require('./nvd-client');
 const discordNotifier = require('./discord-notifier');
 const scanner = require('./scanner');
 
+// Input validation helpers
+const validate = {
+  id(value) {
+    return typeof value === 'string' && /^\d+$/.test(value);
+  },
+  string(value, maxLength) {
+    return typeof value === 'string' && value.length <= maxLength;
+  },
+  cpeId(value) {
+    return typeof value === 'string' && value.length <= 256;
+  }
+};
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// API key authentication middleware
+function authMiddleware(req, res, next) {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) return next(); // no key configured = no auth enforced
+  const provided = req.headers['x-api-key'];
+  if (provided !== apiKey) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+}
+
 // Security middleware
-app.use(helmet());
-app.use(cors());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+    },
+  },
+  strictTransportSecurity: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+  },
+}));
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || 'http://frontend:3000',
+  methods: ['GET', 'POST', 'DELETE'],
+  credentials: false,
+}));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -25,6 +70,10 @@ const limiter = rateLimit({
   max: 100 // limit each IP to 100 requests per windowMs
 });
 app.use('/api/', limiter);
+app.use('/api/', (req, res, next) => {
+  if (req.path === '/health') return next();
+  authMiddleware(req, res, next);
+});
 
 // Body parsing middleware
 app.use(express.json());
@@ -59,8 +108,14 @@ app.post('/api/queries', async (req, res) => {
   try {
     const { cpe_id, name, description } = req.body;
 
-    if (!cpe_id) {
-      return res.status(400).json({ error: 'CPE ID is required' });
+    if (!cpe_id || !validate.cpeId(cpe_id)) {
+      return res.status(400).json({ error: 'Invalid or missing CPE ID' });
+    }
+    if (name !== undefined && !validate.string(name, 500)) {
+      return res.status(400).json({ error: 'Name must be a string (max 500 chars)' });
+    }
+    if (description !== undefined && !validate.string(description, 500)) {
+      return res.status(400).json({ error: 'Description must be a string (max 500 chars)' });
     }
 
     if (!dbInstance) {
@@ -138,6 +193,9 @@ app.post('/api/queries', async (req, res) => {
 app.get('/api/queries/:id/cves', async (req, res) => {
   try {
     const { id } = req.params;
+    if (!validate.id(id)) {
+      return res.status(400).json({ error: 'Invalid query ID' });
+    }
     if (!dbInstance) {
       return res.status(500).json({ error: 'Database not initialized' });
     }
@@ -152,6 +210,9 @@ app.get('/api/queries/:id/cves', async (req, res) => {
 app.delete('/api/queries/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    if (!validate.id(id)) {
+      return res.status(400).json({ error: 'Invalid query ID' });
+    }
     if (!dbInstance) {
       return res.status(500).json({ error: 'Database not initialized' });
     }
@@ -178,7 +239,7 @@ app.post('/api/scan', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error running scan:', error);
-    res.status(500).json({ error: 'Failed to run scan', details: error.message });
+    res.status(500).json({ error: 'Failed to run scan' });
   }
 });
 
@@ -188,6 +249,9 @@ app.post('/api/test-cpe', async (req, res) => {
     const { cpe_id } = req.body;
     if (!cpe_id) {
       return res.status(400).json({ error: 'CPE ID is required' });
+    }
+    if (!validate.cpeId(cpe_id)) {
+      return res.status(400).json({ error: 'Invalid CPE ID format' });
     }
 
     console.log(`Testing CPE: ${cpe_id}`);
@@ -206,11 +270,7 @@ app.post('/api/test-cpe', async (req, res) => {
     });
   } catch (error) {
     console.error('Error testing CPE:', error);
-    res.status(500).json({ 
-      error: 'Failed to test CPE', 
-      details: error.message,
-      status: error.response?.status 
-    });
+    res.status(500).json({ error: 'Failed to test CPE' });
   }
 });
 

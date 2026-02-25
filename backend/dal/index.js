@@ -1,6 +1,7 @@
 // Data Access Layer (DAL) - Abstracts data storage from business logic
 const fs = require('fs').promises;
 const path = require('path');
+const lockfile = require('proper-lockfile');
 
 class DataAccessLayer {
   constructor(dataDir) {
@@ -59,22 +60,30 @@ class DataAccessLayer {
 
   // Generic file operations
   async readFile(filePath) {
+    let release;
     try {
+      release = await lockfile.lock(filePath, { retries: { retries: 5, minTimeout: 50, maxTimeout: 500 } });
       const data = await fs.readFile(filePath, 'utf8');
       return JSON.parse(data);
     } catch (error) {
       console.error(`Error reading file ${filePath}:`, error);
       return [];
+    } finally {
+      if (release) await release();
     }
   }
 
   async writeFile(filePath, data) {
+    let release;
     try {
+      release = await lockfile.lock(filePath, { retries: { retries: 5, minTimeout: 50, maxTimeout: 500 } });
       await fs.writeFile(filePath, JSON.stringify(data, null, 2));
       return true;
     } catch (error) {
       console.error(`Error writing file ${filePath}:`, error);
       return false;
+    } finally {
+      if (release) await release();
     }
   }
 

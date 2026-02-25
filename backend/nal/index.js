@@ -1,6 +1,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const notificationService = require('../notification-service');
+const cryptoUtils = require('../crypto-utils');
 
 /**
  * Notification Access Layer (NAL)
@@ -97,6 +98,23 @@ class NotificationAccessLayer {
   }
 
   /**
+   * Encrypt a webhook URL if WEBHOOK_ENCRYPTION_KEY is set
+   */
+  _encryptUrl(url) {
+    if (!process.env.WEBHOOK_ENCRYPTION_KEY) return url;
+    if (cryptoUtils.isEncrypted(url)) return url;
+    return cryptoUtils.encrypt(url);
+  }
+
+  /**
+   * Decrypt a webhook URL, passing through plaintext if not encrypted
+   */
+  _decryptUrl(url) {
+    if (!process.env.WEBHOOK_ENCRYPTION_KEY) return url;
+    return cryptoUtils.decrypt(url);
+  }
+
+  /**
    * Get all notifications
    */
   async getNotifications() {
@@ -141,7 +159,7 @@ class NotificationAccessLayer {
       const newWebhook = {
         id: Date.now().toString(),
         name,
-        url,
+        url: this._encryptUrl(url),
         platform: platform || notificationService.detectWebhookType(url),
         category,
         description,
@@ -175,6 +193,10 @@ class NotificationAccessLayer {
       // Validate URL if provided
       if (updates.url && !notificationService.isValidWebhookUrl(updates.url)) {
         throw new Error('Invalid webhook URL format');
+      }
+
+      if (updates.url) {
+        updates.url = this._encryptUrl(updates.url);
       }
 
       webhooks.webhooks[webhookIndex] = {
@@ -256,8 +278,8 @@ class NotificationAccessLayer {
         throw new Error('Webhook is inactive');
       }
 
-      const success = await notificationService.sendNotification(webhook.url, vulnerability);
-      
+      const success = await notificationService.sendNotification(this._decryptUrl(webhook.url), vulnerability);
+
       // Log the notification
       await this.logNotification(webhookId, vulnerability, success);
       
@@ -278,7 +300,7 @@ class NotificationAccessLayer {
 
       for (const webhook of webhooks) {
         try {
-          const success = await notificationService.sendNotification(webhook.url, vulnerability);
+          const success = await notificationService.sendNotification(this._decryptUrl(webhook.url), vulnerability);
           results.push({ webhookId: webhook.id, success });
           await this.logNotification(webhook.id, vulnerability, success);
         } catch (error) {
@@ -310,8 +332,8 @@ class NotificationAccessLayer {
         throw new Error('Webhook is inactive');
       }
 
-      const success = await notificationService.sendBatchNotification(webhook.url, vulnerabilities, cpeId);
-      
+      const success = await notificationService.sendBatchNotification(this._decryptUrl(webhook.url), vulnerabilities, cpeId);
+
       // Log the batch notification
       await this.logBatchNotification(webhookId, vulnerabilities, cpeId, success);
       
@@ -332,7 +354,7 @@ class NotificationAccessLayer {
 
       for (const webhook of webhooks) {
         try {
-          const success = await notificationService.sendBatchNotification(webhook.url, vulnerabilities, cpeId);
+          const success = await notificationService.sendBatchNotification(this._decryptUrl(webhook.url), vulnerabilities, cpeId);
           results.push({ webhookId: webhook.id, success });
           await this.logBatchNotification(webhook.id, vulnerabilities, cpeId, success);
         } catch (error) {

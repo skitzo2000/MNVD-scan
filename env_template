@@ -25,3 +25,15 @@ GROUP_ID=1000
 # Examples: latest, v1.0.0, v1.2.3, or a commit SHA
 # Default: latest
 # IMAGE_TAG=latest
+
+# Security Configuration
+# API key for authenticating requests to the backend
+# Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+API_KEY=
+
+# CORS origin restriction (defaults to http://frontend:3000)
+# CORS_ORIGIN=http://frontend:3000
+
+# Encryption key for webhook URLs stored at rest (32 bytes / 64 hex chars)
+# Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+WEBHOOK_ENCRYPTION_KEY=

@@ -17,6 +17,7 @@ export function createProxyHandler(path, options = {}) {
         method,
         headers: {
           'Content-Type': 'application/json',
+          ...(process.env.API_KEY && { 'X-API-Key': process.env.API_KEY }),
         },
         body: method !== 'GET' ? JSON.stringify(req.body) : undefined,
       });
@@ -48,6 +49,7 @@ export function createDynamicProxyHandler(pathFn, options = {}) {
         method,
         headers: {
           'Content-Type': 'application/json',
+          ...(process.env.API_KEY && { 'X-API-Key': process.env.API_KEY }),
         },
         body: method !== 'GET' ? JSON.stringify(req.body) : undefined,
       });

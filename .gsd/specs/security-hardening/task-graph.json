@@ -1,0 +1,347 @@
+{
+  "feature": "security-hardening",
+  "version": "2.0",
+  "generated": "2026-02-25T19:00:00Z",
+  "total_tasks": 10,
+  "estimated_duration_minutes": 90,
+  "max_parallelization": 3,
+  "critical_path_minutes": 55,
+
+  "tasks": [
+    {
+      "id": "SEC-L1-001",
+      "title": "Install proper-lockfile dependency",
+      "description": "Add proper-lockfile npm package to backend for advisory file locking. Run `npm install proper-lockfile` in backend directory. Verify it appears in package.json dependencies and package-lock.json is updated.",
+      "phase": "foundation",
+      "level": 1,
+      "dependencies": [],
+      "files": {
+        "create": [],
+        "modify": ["backend/package.json", "backend/package-lock.json"],
+        "read": []
+      },
+      "acceptance_criteria": [
+        "proper-lockfile listed in backend/package.json dependencies",
+        "backend/package-lock.json updated",
+        "npm ls proper-lockfile shows installed version"
+      ],
+      "verification": {
+        "command": "cd backend && npm ls proper-lockfile",
+        "timeout_seconds": 30
+      },
+      "estimate_minutes": 5,
+      "critical_path": false,
+      "consumers": ["SEC-L2-001"],
+      "integration_test": null,
+      "context": "## Task Context\nInstall proper-lockfile (npm package) for advisory file locking in the DAL. This is a foundation task with no dependencies. Run `cd backend && npm install proper-lockfile`. The package provides lock/unlock for filesystem operations with stale lock detection and retries."
+    },
+    {
+      "id": "SEC-L1-002",
+      "title": "Create crypto-utils module",
+      "description": "Create backend/crypto-utils.js providing AES-256-GCM encrypt/decrypt functions using Node's built-in crypto module. The module reads WEBHOOK_ENCRYPTION_KEY from env (32-byte hex = 64 hex chars). Encrypt produces format `enc:<iv_hex>:<authTag_hex>:<ciphertext_hex>`. Decrypt recognizes the `enc:` prefix and passes through plaintext strings unchanged. Export: encrypt(plaintext), decrypt(ciphertext), isEncrypted(value).",
+      "phase": "foundation",
+      "level": 1,
+      "dependencies": [],
+      "files": {
+        "create": ["backend/crypto-utils.js"],
+        "modify": [],
+        "read": []
+      },
+      "acceptance_criteria": [
+        "backend/crypto-utils.js exists",
+        "encrypt() produces enc: prefixed string",
+        "decrypt() round-trips back to original",
+        "decrypt() passes through plaintext strings unchanged",
+        "isEncrypted() returns true for encrypted, false for plaintext",
+        "Throws if WEBHOOK_ENCRYPTION_KEY is not set or wrong length"
+      ],
+      "verification": {
+        "command": "cd backend && node -e \"const k=require('crypto').randomBytes(32).toString('hex'); process.env.WEBHOOK_ENCRYPTION_KEY=k; const c=require('./crypto-utils'); const e=c.encrypt('test'); console.log('enc:',c.isEncrypted(e)); console.log('rt:',c.decrypt(e)==='test'); console.log('pt:',c.decrypt('plain')==='plain');\"",
+        "timeout_seconds": 10
+      },
+      "estimate_minutes": 10,
+      "critical_path": true,
+      "consumers": ["SEC-L2-002"],
+      "integration_test": null,
+      "context": "## Task Context\nCreate backend/crypto-utils.js using Node built-in `crypto` module. No external dependencies.\n\nAPI:\n- `encrypt(plaintext)` → `enc:<iv_hex>:<authTag_hex>:<ciphertext_hex>`\n- `decrypt(ciphertext)` → original string, or passthrough if not enc: prefixed\n- `isEncrypted(value)` → boolean\n\nAlgorithm: AES-256-GCM, 16-byte random IV, 16-byte auth tag.\nKey: `process.env.WEBHOOK_ENCRYPTION_KEY` (64 hex chars = 32 bytes).\nThrow Error if key missing or wrong length.\n\nIMPORTANT: decrypt must return plaintext strings as-is (no enc: prefix = passthrough). This enables migration from unencrypted to encrypted data."
+    },
+    {
+      "id": "SEC-L2-001",
+      "title": "Add file locking to DAL",
+      "description": "Modify backend/dal/index.js to use proper-lockfile for advisory file locking on readFile and writeFile methods. Add `const lockfile = require('proper-lockfile');` at top. Wrap readFile body with lock acquire/release in try/finally. Same for writeFile. Lock config: retries 5, minTimeout 50ms, maxTimeout 500ms. Lock files appear alongside data files (e.g. queries.json.lock).",
+      "phase": "core",
+      "level": 2,
+      "dependencies": ["SEC-L1-001"],
+      "files": {
+        "create": [],
+        "modify": ["backend/dal/index.js"],
+        "read": []
+      },
+      "acceptance_criteria": [
+        "lockfile required at top of dal/index.js",
+        "readFile acquires lock before reading, releases in finally",
+        "writeFile acquires lock before writing, releases in finally",
+        "Lock retry config: retries 5, minTimeout 50, maxTimeout 500",
+        "DAL still initializes and reads data correctly"
+      ],
+      "verification": {
+        "command": "cd backend && node -e \"const DAL=require('./dal'); const path=require('path'); (async()=>{const d=new DAL(path.join(__dirname,'data')); await d.initialize(); const q=await d.getAllQueries(); console.log('ok:',Array.isArray(q));})().catch(e=>{console.error(e);process.exit(1)})\"",
+        "timeout_seconds": 15
+      },
+      "estimate_minutes": 10,
+      "critical_path": false,
+      "consumers": ["SEC-L4-002"],
+      "integration_test": null,
+      "context": "## Task Context\nModify backend/dal/index.js to add file locking using proper-lockfile.\n\n### Current readFile (lines 61-69):\n```javascript\nasync readFile(filePath) {\n  try {\n    const data = await fs.readFile(filePath, 'utf8');\n    return JSON.parse(data);\n  } catch (error) {\n    console.error(`Error reading file ${filePath}:`, error);\n    return [];\n  }\n}\n```\n\n### Current writeFile (lines 71-79):\n```javascript\nasync writeFile(filePath, data) {\n  try {\n    await fs.writeFile(filePath, JSON.stringify(data, null, 2));\n    return true;\n  } catch (error) {\n    console.error(`Error writing file ${filePath}:`, error);\n    return false;\n  }\n}\n```\n\n### New pattern (both methods):\n1. `const release = await lockfile.lock(filePath, { retries: { retries: 5, minTimeout: 50, maxTimeout: 500 } });`\n2. Do the read/write\n3. `finally { if (release) await release(); }`\n\nAdd `const lockfile = require('proper-lockfile');` after line 2."
+    },
+    {
+      "id": "SEC-L2-002",
+      "title": "Add webhook URL encryption to NAL",
+      "description": "Modify backend/nal/index.js to encrypt webhook URLs on write and decrypt on read. Add `const cryptoUtils = require('../crypto-utils');` at top. Add private _encryptUrl(url) and _decryptUrl(url) helper methods. Encrypt in addWebhook and updateWebhook. Decrypt in sendNotification, sendNotificationToCategory, sendBatchNotification, and sendBatchNotificationToCategory before passing URL to notificationService.",
+      "phase": "core",
+      "level": 2,
+      "dependencies": ["SEC-L1-002"],
+      "files": {
+        "create": [],
+        "modify": ["backend/nal/index.js"],
+        "read": ["backend/crypto-utils.js"]
+      },
+      "acceptance_criteria": [
+        "cryptoUtils required at top of nal/index.js",
+        "_encryptUrl and _decryptUrl helper methods added",
+        "addWebhook encrypts URL before storing",
+        "updateWebhook encrypts URL if url field is in updates",
+        "All send* methods decrypt URL before passing to notificationService",
+        "If WEBHOOK_ENCRYPTION_KEY not set, URLs pass through unchanged"
+      ],
+      "verification": {
+        "command": "cd backend && node -e \"const NAL=require('./nal'); console.log('NAL loads:', typeof NAL === 'function')\"",
+        "timeout_seconds": 10
+      },
+      "estimate_minutes": 15,
+      "critical_path": true,
+      "consumers": ["SEC-L4-002"],
+      "integration_test": null,
+      "context": "## Task Context\nModify backend/nal/index.js to encrypt/decrypt webhook URLs.\n\n### Add require after line 2:\n```javascript\nconst cryptoUtils = require('../crypto-utils');\n```\n\n### Add helper methods before getNotifications() (before line 99):\n```javascript\n_encryptUrl(url) {\n  if (!process.env.WEBHOOK_ENCRYPTION_KEY) return url;\n  if (cryptoUtils.isEncrypted(url)) return url;\n  return cryptoUtils.encrypt(url);\n}\n_decryptUrl(url) {\n  if (!process.env.WEBHOOK_ENCRYPTION_KEY) return url;\n  return cryptoUtils.decrypt(url);\n}\n```\n\n### Encrypt on write:\n- addWebhook (line ~144): change `url,` to `url: this._encryptUrl(url),`\n- updateWebhook (after line ~178 URL validation): add `if (updates.url) { updates.url = this._encryptUrl(updates.url); }`\n\n### Decrypt on read (before sending):\n- sendNotification line 259: `this._decryptUrl(webhook.url)`\n- sendNotificationToCategory line 281: `this._decryptUrl(webhook.url)`\n- sendBatchNotification line 313: `this._decryptUrl(webhook.url)`\n- sendBatchNotificationToCategory line 335: `this._decryptUrl(webhook.url)`"
+    },
+    {
+      "id": "SEC-L2-003",
+      "title": "Harden backend server — auth, CORS, validation, Helmet, error sanitization",
+      "description": "Major modification to backend/server.js. (1) Add validate helper object with id(), string(), cpeId() functions. (2) Add authMiddleware function checking X-API-Key header. (3) Configure Helmet with explicit CSP and HSTS. (4) Configure CORS with CORS_ORIGIN env var, methods GET/POST/DELETE, credentials false. (5) Apply auth middleware to /api/* except /api/health. (6) Add input validation to POST /api/queries (cpe_id, name, description), GET /api/queries/:id/cves (id), DELETE /api/queries/:id (id), POST /api/test-cpe (cpe_id). (7) Remove error.message from POST /api/scan and POST /api/test-cpe error responses.",
+      "phase": "core",
+      "level": 2,
+      "dependencies": [],
+      "files": {
+        "create": [],
+        "modify": ["backend/server.js"],
+        "read": []
+      },
+      "acceptance_criteria": [
+        "validate helper object defined with id(), string(), cpeId()",
+        "authMiddleware function defined",
+        "Helmet configured with CSP directives and HSTS",
+        "CORS configured with CORS_ORIGIN env, methods, no credentials",
+        "Auth middleware applied to /api/* except /api/health",
+        "POST /api/queries validates cpe_id (string, max 256), name/description (string, max 500)",
+        "GET /api/queries/:id/cves validates id is numeric string",
+        "DELETE /api/queries/:id validates id is numeric string",
+        "POST /api/test-cpe validates cpe_id",
+        "POST /api/scan error response has no details field",
+        "POST /api/test-cpe error response has no details or status fields"
+      ],
+      "verification": {
+        "command": "cd backend && node -e \"require('dotenv').config(); process.env.API_KEY='test'; const app=require; console.log('server.js loads without error')\" 2>&1 | head -5 || echo 'Check manually'",
+        "timeout_seconds": 15
+      },
+      "estimate_minutes": 20,
+      "critical_path": true,
+      "consumers": ["SEC-L3-001", "SEC-L3-003", "SEC-L4-002"],
+      "integration_test": null,
+      "context": "## Task Context\nMajor modification to backend/server.js (currently 330 lines).\n\n### 1. Add validate helper (after line 13, after requires):\n```javascript\nconst validate = {\n  id(value) { return typeof value === 'string' && /^\\d+$/.test(value); },\n  string(value, maxLength) { return typeof value === 'string' && value.length <= maxLength; },\n  cpeId(value) { return typeof value === 'string' && value.length <= 256; }\n};\n```\n\n### 2. Add authMiddleware (after const PORT line 16):\n```javascript\nfunction authMiddleware(req, res, next) {\n  const apiKey = process.env.API_KEY;\n  if (!apiKey) return next();\n  const provided = req.headers['x-api-key'];\n  if (provided !== apiKey) return res.status(401).json({ error: 'Unauthorized' });\n  next();\n}\n```\n\n### 3. Replace line 19 `app.use(helmet());` with explicit Helmet config:\nCSP: default-src 'self', script-src 'self', style-src 'self' 'unsafe-inline', img-src 'self' data:, connect-src 'self', font-src 'self', object-src 'none', frame-ancestors 'none'.\nHSTS: maxAge 31536000, includeSubDomains true.\n\n### 4. Replace line 20 `app.use(cors());` with:\n```javascript\napp.use(cors({ origin: process.env.CORS_ORIGIN || 'http://frontend:3000', methods: ['GET','POST','DELETE'], credentials: false }));\n```\n\n### 5. After rate limiter (after line 27), add auth middleware:\n```javascript\napp.use('/api/', (req, res, next) => { if (req.path === '/health') return next(); authMiddleware(req, res, next); });\n```\n\n### 6. Input validation additions:\n- POST /api/queries (line 60): replace `if (!cpe_id)` with validation for cpe_id (string, max 256), name (string if present, max 500), description (string if present, max 500)\n- GET /api/queries/:id/cves (after line 140): add `if (!validate.id(id)) return res.status(400)...`\n- DELETE /api/queries/:id (after line 154): add `if (!validate.id(id)) return res.status(400)...`\n- POST /api/test-cpe (after line 191): add `if (!validate.cpeId(cpe_id)) return res.status(400)...`\n\n### 7. Error sanitization:\n- Line 181: change `{ error: 'Failed to run scan', details: error.message }` to `{ error: 'Failed to run scan' }`\n- Lines 209-213: change multi-field error to `{ error: 'Failed to test CPE' }`"
+    },
+    {
+      "id": "SEC-L3-001",
+      "title": "Update frontend proxy and security headers",
+      "description": "Modify frontend/lib/apiProxy.js to forward X-API-Key header from process.env.API_KEY in both createProxyHandler and createDynamicProxyHandler. Modify frontend/next.config.js to add Content-Security-Policy and Strict-Transport-Security headers to the existing headers() function.",
+      "phase": "integration",
+      "level": 3,
+      "dependencies": ["SEC-L2-003"],
+      "files": {
+        "create": [],
+        "modify": ["frontend/lib/apiProxy.js", "frontend/next.config.js"],
+        "read": []
+      },
+      "acceptance_criteria": [
+        "createProxyHandler sends X-API-Key header when API_KEY env is set",
+        "createDynamicProxyHandler sends X-API-Key header when API_KEY env is set",
+        "next.config.js headers() includes Content-Security-Policy",
+        "next.config.js headers() includes Strict-Transport-Security",
+        "Existing headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy) preserved"
+      ],
+      "verification": {
+        "command": "cd frontend && node -e \"process.env.API_KEY='test'; const {createProxyHandler}=require('./lib/apiProxy.js'); console.log('proxy loads:', typeof createProxyHandler === 'function')\" 2>&1 || echo 'ESM - check manually'",
+        "timeout_seconds": 10
+      },
+      "estimate_minutes": 10,
+      "critical_path": true,
+      "consumers": [],
+      "integration_test": null,
+      "context": "## Task Context\n\n### frontend/lib/apiProxy.js\nBoth proxy handlers currently have:\n```javascript\nheaders: { 'Content-Type': 'application/json' },\n```\n\nChange both to:\n```javascript\nheaders: {\n  'Content-Type': 'application/json',\n  ...(process.env.API_KEY && { 'X-API-Key': process.env.API_KEY }),\n},\n```\n\nNote: This uses the SERVER-SIDE env var (not NEXT_PUBLIC_). The proxy runs server-side in Next.js API routes, so the key stays on the server.\n\n### frontend/next.config.js\nAdd to the existing headers array (after the Referrer-Policy entry, around line 63):\n```javascript\n{\n  key: 'Content-Security-Policy',\n  value: \"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; frame-ancestors 'none'\",\n},\n{\n  key: 'Strict-Transport-Security',\n  value: 'max-age=31536000; includeSubDomains',\n},\n```"
+    },
+    {
+      "id": "SEC-L3-002",
+      "title": "Enable NVD API key in request headers",
+      "description": "Modify backend/nvd-client.js to re-enable the API key header in the axios instance. The key is already loaded as API_KEY from process.env.NVD_API_KEY on line 6. The axios instance creation (lines 16-22) has the apiKey header commented out. Uncomment/fix the spread to include the header when API_KEY is defined.",
+      "phase": "integration",
+      "level": 3,
+      "dependencies": [],
+      "files": {
+        "create": [],
+        "modify": ["backend/nvd-client.js"],
+        "read": []
+      },
+      "acceptance_criteria": [
+        "axios instance includes apiKey header when NVD_API_KEY env is set",
+        "axios instance omits apiKey header when NVD_API_KEY is not set",
+        "Comment about 'Temporarily disabled' removed"
+      ],
+      "verification": {
+        "command": "cd backend && node -e \"process.env.NVD_API_KEY='testkey'; delete require.cache[require.resolve('./nvd-client')]; const nv=require('./nvd-client'); console.log('nvd-client loads:', typeof nv.fetchVulnerabilitiesByCPE === 'function')\"",
+        "timeout_seconds": 10
+      },
+      "estimate_minutes": 5,
+      "critical_path": false,
+      "consumers": [],
+      "integration_test": null,
+      "context": "## Task Context\nModify backend/nvd-client.js lines 16-22.\n\n### Current:\n```javascript\nconst apiClient = axios.create({\n  timeout: 30000,\n  headers: {\n    'User-Agent': 'MNVD-Scanner/1.0.0'\n    // Temporarily disabled API key: ...(API_KEY && { 'apiKey': API_KEY })\n  }\n});\n```\n\n### Replace with:\n```javascript\nconst apiClient = axios.create({\n  timeout: 30000,\n  headers: {\n    'User-Agent': 'MNVD-Scanner/1.0.0',\n    ...(API_KEY && { 'apiKey': API_KEY }),\n  }\n});\n```\n\nAPI_KEY is already defined on line 6: `const API_KEY = process.env.NVD_API_KEY;`"
+    },
+    {
+      "id": "SEC-L3-003",
+      "title": "Update env_template and docker-compose files",
+      "description": "Add API_KEY, CORS_ORIGIN, and WEBHOOK_ENCRYPTION_KEY to env_template with generation instructions. Add the same env vars to docker-compose.yml (backend + frontend), docker-compose.production.yml (backend + frontend), and docker-compose.versioned.yml (backend + frontend). Backend gets all three, frontend gets API_KEY only.",
+      "phase": "integration",
+      "level": 3,
+      "dependencies": ["SEC-L2-003"],
+      "files": {
+        "create": [],
+        "modify": ["env_template", "docker-compose.yml", "docker-compose.production.yml", "docker-compose.versioned.yml"],
+        "read": []
+      },
+      "acceptance_criteria": [
+        "env_template has API_KEY, CORS_ORIGIN, WEBHOOK_ENCRYPTION_KEY with generation commands",
+        "docker-compose.yml backend has API_KEY, CORS_ORIGIN, WEBHOOK_ENCRYPTION_KEY",
+        "docker-compose.yml frontend has API_KEY",
+        "docker-compose.production.yml backend has API_KEY, CORS_ORIGIN, WEBHOOK_ENCRYPTION_KEY",
+        "docker-compose.production.yml frontend has API_KEY",
+        "docker-compose.versioned.yml backend has API_KEY, CORS_ORIGIN, WEBHOOK_ENCRYPTION_KEY",
+        "docker-compose.versioned.yml frontend has API_KEY"
+      ],
+      "verification": {
+        "command": "grep -c 'API_KEY' env_template docker-compose.yml docker-compose.production.yml docker-compose.versioned.yml",
+        "timeout_seconds": 10
+      },
+      "estimate_minutes": 10,
+      "critical_path": false,
+      "consumers": [],
+      "integration_test": null,
+      "context": "## Task Context\n\n### env_template — append at end:\n```env\n\n# Security Configuration\n# API key for authenticating requests to the backend\n# Generate with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"\nAPI_KEY=\n\n# CORS origin restriction (defaults to http://frontend:3000)\n# CORS_ORIGIN=http://frontend:3000\n\n# Encryption key for webhook URLs stored at rest (32 bytes / 64 hex chars)\n# Generate with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"\nWEBHOOK_ENCRYPTION_KEY=\n```\n\n### docker-compose.yml — backend environment (after `- PORT=3000`):\n```yaml\n      - API_KEY=${API_KEY}\n      - CORS_ORIGIN=${CORS_ORIGIN:-http://frontend:3000}\n      - WEBHOOK_ENCRYPTION_KEY=${WEBHOOK_ENCRYPTION_KEY}\n```\n\n### docker-compose.yml — frontend environment (after `- BACKEND_URL=http://backend:3000`):\n```yaml\n      - API_KEY=${API_KEY}\n```\n\nSame pattern for docker-compose.production.yml and docker-compose.versioned.yml."
+    },
+    {
+      "id": "SEC-L4-001",
+      "title": "Update README with security section",
+      "description": "Replace the existing 'Security Best Practices' section in README.md (lines 275-281) with a comprehensive Security section documenting: deployment context (trusted-network only with reasons), API key authentication, webhook URL encryption, security environment variables table, best practices, and future improvements. Also add the three new env vars to the existing Environment Variables table.",
+      "phase": "quality",
+      "level": 4,
+      "dependencies": ["SEC-L3-001", "SEC-L3-002", "SEC-L3-003"],
+      "files": {
+        "create": [],
+        "modify": ["README.md"],
+        "read": []
+      },
+      "acceptance_criteria": [
+        "Security section documents trusted-network deployment context",
+        "Lists reasons app is not for public internet: no multi-user, static API key, no TLS, JSON storage",
+        "Documents API key authentication with generation command",
+        "Documents webhook URL encryption with generation command",
+        "Security environment variables table present",
+        "Main environment variables table includes API_KEY, CORS_ORIGIN, WEBHOOK_ENCRYPTION_KEY",
+        "Future improvements section mentions structured logging and data migrations"
+      ],
+      "verification": {
+        "command": "grep -c 'trusted-network\\|API_KEY\\|WEBHOOK_ENCRYPTION_KEY\\|CORS_ORIGIN' README.md",
+        "timeout_seconds": 10
+      },
+      "estimate_minutes": 15,
+      "critical_path": false,
+      "consumers": [],
+      "integration_test": null,
+      "context": "## Task Context\nModify README.md. Two changes:\n\n### 1. Replace 'Security Best Practices' section (lines 275-281)\nReplace with comprehensive Security section covering:\n- Deployment Context: designed for VPN/Tailnet/LAN only\n- Reasons not for public internet: (1) single-tenant, no multi-user/RBAC/sessions, (2) static API key not per-user credentials, (3) no built-in TLS termination, (4) JSON file storage with no DB access control\n- Authentication: X-API-Key header, generate command\n- Webhook URL Encryption: AES-256-GCM when WEBHOOK_ENCRYPTION_KEY set, auto-migration\n- Security Environment Variables table: API_KEY, CORS_ORIGIN, WEBHOOK_ENCRYPTION_KEY\n- Best Practices: env vars, key rotation, monitoring, Dependabot\n- Future Improvements: structured logging, data migrations\n\n### 2. Update Environment Variables table (around line 267)\nAdd after DATA_DIR row:\n| `API_KEY` | API key for backend authentication | Recommended |\n| `CORS_ORIGIN` | Allowed CORS origin (default: `http://frontend:3000`) | No |\n| `WEBHOOK_ENCRYPTION_KEY` | AES-256 key for webhook URL encryption (64 hex chars) | Recommended |"
+    },
+    {
+      "id": "SEC-L4-002",
+      "title": "Smoke test verification",
+      "description": "Run integration smoke tests to verify all security changes work together. Test: (1) all modules load without error, (2) crypto-utils round-trip works, (3) auth middleware rejects without key and accepts with key, (4) health endpoint remains open. This is a verification-only task with no file modifications.",
+      "phase": "quality",
+      "level": 4,
+      "dependencies": ["SEC-L3-001", "SEC-L3-002", "SEC-L3-003"],
+      "files": {
+        "create": [],
+        "modify": [],
+        "read": ["backend/server.js", "backend/crypto-utils.js", "backend/dal/index.js", "backend/nal/index.js", "backend/nvd-client.js"]
+      },
+      "acceptance_criteria": [
+        "All backend modules load without error",
+        "Crypto-utils encrypt/decrypt round-trips correctly",
+        "Plaintext passthrough works in decrypt",
+        "Auth middleware returns 401 without key",
+        "Auth middleware returns 200 with correct key",
+        "Health endpoint returns 200 without key"
+      ],
+      "verification": {
+        "command": "cd backend && node -e \"const k=require('crypto').randomBytes(32).toString('hex'); process.env.WEBHOOK_ENCRYPTION_KEY=k; process.env.API_KEY='testkey'; const c=require('./crypto-utils'); const e=c.encrypt('https://example.com'); console.log('crypto ok:',c.decrypt(e)==='https://example.com'); require('./dal'); require('./nal'); console.log('all modules loaded');\"",
+        "timeout_seconds": 15
+      },
+      "estimate_minutes": 5,
+      "critical_path": true,
+      "consumers": [],
+      "integration_test": null,
+      "context": "## Task Context\nVerification-only task. No files to create or modify. Run smoke tests to confirm all security changes integrate correctly.\n\n### Test 1: Module loading\n```bash\ncd backend && node -e \"process.env.WEBHOOK_ENCRYPTION_KEY=require('crypto').randomBytes(32).toString('hex'); require('./crypto-utils'); require('./dal'); require('./nal'); console.log('all modules ok');\"\n```\n\n### Test 2: Crypto round-trip\n```bash\ncd backend && node -e \"const k=require('crypto').randomBytes(32).toString('hex'); process.env.WEBHOOK_ENCRYPTION_KEY=k; const c=require('./crypto-utils'); const e=c.encrypt('test'); console.log(c.decrypt(e)==='test', c.decrypt('plain')==='plain');\"\n```\n\n### Test 3: Auth middleware (start server briefly)\nStart server with API_KEY=testkey, make HTTP request without key (expect 401), with key (expect 200), health without key (expect 200)."
+    }
+  ],
+
+  "levels": {
+    "1": {
+      "name": "foundation",
+      "tasks": ["SEC-L1-001", "SEC-L1-002"],
+      "parallel": true,
+      "estimated_minutes": 10,
+      "depends_on_levels": []
+    },
+    "2": {
+      "name": "core",
+      "tasks": ["SEC-L2-001", "SEC-L2-002", "SEC-L2-003"],
+      "parallel": true,
+      "estimated_minutes": 20,
+      "depends_on_levels": [1]
+    },
+    "3": {
+      "name": "integration",
+      "tasks": ["SEC-L3-001", "SEC-L3-002", "SEC-L3-003"],
+      "parallel": true,
+      "estimated_minutes": 10,
+      "depends_on_levels": [2]
+    },
+    "4": {
+      "name": "quality",
+      "tasks": ["SEC-L4-001", "SEC-L4-002"],
+      "parallel": true,
+      "estimated_minutes": 15,
+      "depends_on_levels": [3]
+    }
+  },
+
+  "conflict_matrix": {
+    "description": "Tasks that cannot run in parallel due to shared files",
+    "conflicts": []
+  }
+}
