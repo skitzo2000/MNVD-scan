@@ -99,7 +99,7 @@ class DataAccessLayer {
 
   async updateQuery(id, updates) {
     const data = await this.readFile(this.queriesFile);
-    const index = data.findIndex(q => q.id === id);
+    const index = data.findIndex(query => query.id === id);
     if (index !== -1) {
       data[index] = { ...data[index], ...updates, updatedAt: new Date().toISOString() };
       await this.writeFile(this.queriesFile, data);
@@ -110,7 +110,7 @@ class DataAccessLayer {
 
   async deleteQuery(id) {
     const data = await this.readFile(this.queriesFile);
-    const filtered = data.filter(q => q.id !== id);
+    const filtered = data.filter(query => query.id !== id);
     await this.writeFile(this.queriesFile, filtered);
     return true;
   }

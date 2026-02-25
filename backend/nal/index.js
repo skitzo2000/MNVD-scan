@@ -166,7 +166,7 @@ class NotificationAccessLayer {
   async updateWebhook(id, updates) {
     try {
       const webhooks = await this.getWebhooks();
-      const webhookIndex = webhooks.webhooks.findIndex(w => w.id === id);
+      const webhookIndex = webhooks.webhooks.findIndex(webhook => webhook.id === id);
       
       if (webhookIndex === -1) {
         throw new Error('Webhook not found');
@@ -197,7 +197,7 @@ class NotificationAccessLayer {
   async deleteWebhook(id) {
     try {
       const webhooks = await this.getWebhooks();
-      const webhookIndex = webhooks.webhooks.findIndex(w => w.id === id);
+      const webhookIndex = webhooks.webhooks.findIndex(webhook => webhook.id === id);
       
       if (webhookIndex === -1) {
         throw new Error('Webhook not found');
@@ -220,7 +220,7 @@ class NotificationAccessLayer {
   async getWebhooksByCategory(category) {
     try {
       const webhooks = await this.getWebhooks();
-      return webhooks.webhooks.filter(w => w.category === category && w.isActive);
+      return webhooks.webhooks.filter(webhook => webhook.category === category && webhook.isActive);
     } catch (error) {
       console.error('Failed to get webhooks by category:', error);
       throw error;
@@ -233,7 +233,7 @@ class NotificationAccessLayer {
   async getWebhooksByPlatform(platform) {
     try {
       const webhooks = await this.getWebhooks();
-      return webhooks.webhooks.filter(w => w.platform === platform && w.isActive);
+      return webhooks.webhooks.filter(webhook => webhook.platform === platform && webhook.isActive);
     } catch (error) {
       console.error('Failed to get webhooks by platform:', error);
       throw error;
@@ -246,7 +246,7 @@ class NotificationAccessLayer {
   async sendNotification(webhookId, vulnerability) {
     try {
       const webhooks = await this.getWebhooks();
-      const webhook = webhooks.webhooks.find(w => w.id === webhookId);
+      const webhook = webhooks.webhooks.find(webhook => webhook.id === webhookId);
       
       if (!webhook) {
         throw new Error('Webhook not found');
@@ -300,7 +300,7 @@ class NotificationAccessLayer {
   async sendBatchNotification(webhookId, vulnerabilities, cpeId) {
     try {
       const webhooks = await this.getWebhooks();
-      const webhook = webhooks.webhooks.find(w => w.id === webhookId);
+      const webhook = webhooks.webhooks.find(webhook => webhook.id === webhookId);
       
       if (!webhook) {
         throw new Error('Webhook not found');
@@ -355,7 +355,7 @@ class NotificationAccessLayer {
     try {
       const notifications = await this.getNotifications();
       const webhooks = await this.getWebhooks();
-      const webhook = webhooks.webhooks.find(w => w.id === webhookId);
+      const webhook = webhooks.webhooks.find(webhook => webhook.id === webhookId);
 
       const notification = {
         id: Date.now().toString(),
@@ -392,7 +392,7 @@ class NotificationAccessLayer {
     try {
       const notifications = await this.getNotifications();
       const webhooks = await this.getWebhooks();
-      const webhook = webhooks.webhooks.find(w => w.id === webhookId);
+      const webhook = webhooks.webhooks.find(webhook => webhook.id === webhookId);
 
       const notification = {
         id: Date.now().toString(),

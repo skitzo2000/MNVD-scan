@@ -11,33 +11,21 @@ import {
   CircularProgress
 } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
+import { getSeverityTextColor, getCardSeverityStyle } from '../../lib/severityColors';
 
-const QueryCard = ({ 
-  query, 
-  onCardClick, 
-  onDelete, 
-  deletingQuery 
+/**
+ * @param {Object} props
+ * @param {{ id: string, cpe_id: string, name?: string, description?: string, createdAt: string, totalCves: number, criticalHighCount: number, mediumCount: number, lowCount: number }} props.query
+ * @param {Function} props.onCardClick
+ * @param {Function} props.onDelete
+ * @param {string} [props.deletingQuery]
+ */
+const QueryCard = ({
+  query,
+  onCardClick,
+  onDelete,
+  deletingQuery
 }) => {
-  const getSeverityTextColor = (severity) => {
-    switch (severity?.toLowerCase()) {
-      case 'critical':
-      case 'high': return '#d32f2f';
-      case 'medium': return '#f57c00';
-      case 'low': return '#1976d2';
-      default: return '#666';
-    }
-  };
-
-  const getCardSeverityStyle = (query) => {
-    if (query.criticalHighCount > 0) {
-      return { borderLeft: '4px solid #d32f2f', backgroundColor: '#ffebee' };
-    } else if (query.mediumCount > 0) {
-      return { borderLeft: '4px solid #f57c00', backgroundColor: '#fff3e0' };
-    } else if (query.lowCount > 0) {
-      return { borderLeft: '4px solid #1976d2', backgroundColor: '#e3f2fd' };
-    }
-    return {};
-  };
 
   return (
     <Card 

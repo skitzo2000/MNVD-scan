@@ -1,5 +1,31 @@
 const axios = require('axios');
 
+// Shared helpers
+function truncateString(str, maxLength, suffix = '...') {
+  if (str.length <= maxLength) return str;
+  return str.substring(0, maxLength - suffix.length) + suffix;
+}
+
+function countSeverities(vulnerabilities) {
+  return {
+    critical: vulnerabilities.filter(v => v.severity === 'CRITICAL').length,
+    high: vulnerabilities.filter(v => v.severity === 'HIGH').length,
+    medium: vulnerabilities.filter(v => v.severity === 'MEDIUM').length,
+    low: vulnerabilities.filter(v => v.severity === 'LOW').length
+  };
+}
+
+function logWebhookError(error, context = 'webhook') {
+  console.error(`Failed to send ${context} notification:`, error.message);
+  if (error.response) {
+    console.error(`${context} API error response:`, {
+      status: error.response.status,
+      statusText: error.response.statusText,
+      data: error.response.data
+    });
+  }
+}
+
 // Webhook timeout
 const WEBHOOK_TIMEOUT = 10000; // 10 seconds
 
@@ -23,22 +49,12 @@ async function sendNotification(webhookUrl, vulnerability) {
     if (response.status === 204 || response.status === 200) {
       console.log(`${webhookType} notification sent successfully for ${vulnerability.cveId}`);
       return true;
-    } else {
-      console.warn(`${webhookType} webhook returned status ${response.status} for ${vulnerability.cveId}`);
-      return false;
     }
+    console.warn(`${webhookType} webhook returned status ${response.status} for ${vulnerability.cveId}`);
+    return false;
 
   } catch (error) {
-    console.error(`Failed to send notification for ${vulnerability.cveId}:`, error.message);
-
-    if (error.response) {
-      console.error('Webhook API error response:', {
-        status: error.response.status,
-        statusText: error.response.statusText,
-        data: error.response.data
-      });
-    }
-
+    logWebhookError(error, webhookType);
     return false;
   }
 }
@@ -93,7 +109,7 @@ function createTeamsPayload(vulnerability) {
       "activityTitle": `🚨 New Vulnerability Detected: ${cveId}`,
       "activitySubtitle": `Severity: ${severity} (${cvssScore})`,
       "activityImage": "https://nvd.nist.gov/images/nvd-logo.png",
-      "text": description.length > 1000 ? description.substring(0, 997) + '...' : description,
+      "text": truncateString(description, 1000),
       "facts": [
         {
           "name": "CPE Match",
@@ -122,9 +138,7 @@ function createDiscordEmbed(vulnerability) {
   const { cveId, description, severity, cvssScore, nvdUrl, cpeMatch } = vulnerability;
 
   const color = getSeverityColor(severity);
-  const truncatedDescription = description.length > 500
-    ? description.substring(0, 497) + '...'
-    : description;
+  const truncatedDescription = truncateString(description, 500);
 
   return {
     title: `🚨 New Vulnerability Detected: ${cveId}`,
@@ -191,10 +205,9 @@ async function sendBatchNotification(webhookUrl, vulnerabilities, cpeId) {
     if (response.status === 204 || response.status === 200) {
       console.log(`Batch ${webhookType} notification sent for ${vulnerabilities.length} vulnerabilities`);
       return true;
-    } else {
-      console.warn(`Batch ${webhookType} webhook returned status ${response.status}`);
-      return false;
     }
+    console.warn(`Batch ${webhookType} webhook returned status ${response.status}`);
+    return false;
 
   } catch (error) {
     console.error(`Failed to send batch notification:`, error.message);
@@ -227,10 +240,7 @@ function createDiscordBatchPayload(vulnerabilities, cpeId) {
 
 // Create Microsoft Teams batch payload
 function createTeamsBatchPayload(vulnerabilities, cpeId) {
-  const criticalCount = vulnerabilities.filter(v => v.severity === 'CRITICAL').length;
-  const highCount = vulnerabilities.filter(v => v.severity === 'HIGH').length;
-  const mediumCount = vulnerabilities.filter(v => v.severity === 'MEDIUM').length;
-  const lowCount = vulnerabilities.filter(v => v.severity === 'LOW').length;
+  const counts = countSeverities(vulnerabilities);
 
   const description = vulnerabilities
     .slice(0, 5)
@@ -257,7 +267,7 @@ function createTeamsBatchPayload(vulnerabilities, cpeId) {
         },
         {
           "name": "Summary",
-          "value": `Critical: ${criticalCount} | High: ${highCount} | Medium: ${mediumCount} | Low: ${lowCount}`
+          "value": `Critical: ${counts.critical} | High: ${counts.high} | Medium: ${counts.medium} | Low: ${counts.low}`
         },
         {
           "name": "Total Found",
@@ -271,10 +281,7 @@ function createTeamsBatchPayload(vulnerabilities, cpeId) {
 
 // Create Discord batch embed
 function createDiscordBatchEmbed(vulnerabilities, cpeId) {
-  const criticalCount = vulnerabilities.filter(v => v.severity === 'CRITICAL').length;
-  const highCount = vulnerabilities.filter(v => v.severity === 'HIGH').length;
-  const mediumCount = vulnerabilities.filter(v => v.severity === 'MEDIUM').length;
-  const lowCount = vulnerabilities.filter(v => v.severity === 'LOW').length;
+  const counts = countSeverities(vulnerabilities);
 
   const description = vulnerabilities
     .slice(0, 5)
@@ -296,7 +303,7 @@ function createDiscordBatchEmbed(vulnerabilities, cpeId) {
       },
       {
         name: 'Summary',
-        value: `Critical: ${criticalCount} | High: ${highCount} | Medium: ${mediumCount} | Low: ${lowCount}`,
+        value: `Critical: ${counts.critical} | High: ${counts.high} | Medium: ${counts.medium} | Low: ${counts.low}`,
         inline: true
       },
       {

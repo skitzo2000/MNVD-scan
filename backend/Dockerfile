@@ -3,8 +3,14 @@ FROM node:25-slim AS base
 
 WORKDIR /app
 
+# Set ownership of workdir to node user
+RUN chown node:node /app
+
+# Switch to node user before any file operations
+USER node
+
 # Copy package files
-COPY package*.json ./
+COPY --chown=node:node package*.json ./
 
 # Install dependencies (production only)
 RUN npm ci --omit=dev
@@ -13,15 +19,10 @@ RUN npm ci --omit=dev
 RUN node -e "require('dotenv'); require('express'); require('axios'); require('cors'); require('helmet'); console.log('All critical dependencies found')"
 
 # Copy backend source code
-COPY . .
+COPY --chown=node:node . .
 
-# Create data directory and set proper ownership for node user
-RUN mkdir -p /app/data && \
-    chown -R node:node /app && \
-    chmod -R 755 /app
-
-# Switch to the node user (non-root user provided by the image)
-USER node
+# Create data directory as node user
+RUN mkdir -p /app/data
 
 # Expose port
 EXPOSE 3000

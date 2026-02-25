@@ -129,17 +129,19 @@ async function getQueryCVEStats(dal, queryId) {
 // Track last check time for queries
 async function updateQueryLastChecked(dal, queryId) {
   const queries = await dal.getAllQueries();
-  const query = queries.find(q => q.id === queryId);
-  if (query) {
-    query.lastChecked = new Date().toISOString();
-    await dal.updateQuery(query);
-    console.log(`Updated last checked time for query ${queryId}: ${query.lastChecked}`);
+  const query = queries.find(query => query.id === queryId);
+  if (!query) {
+    console.warn(`Query ${queryId} not found for last-check update`);
+    return;
   }
+  query.lastChecked = new Date().toISOString();
+  await dal.updateQuery(query);
+  console.log(`Updated last checked time for query ${queryId}: ${query.lastChecked}`);
 }
 
 async function getQueryLastChecked(dal, queryId) {
   const queries = await dal.getAllQueries();
-  const query = queries.find(q => q.id === queryId);
+  const query = queries.find(query => query.id === queryId);
   if (query?.lastChecked) {
     return new Date(query.lastChecked);
   }

@@ -1,0 +1,147 @@
+{
+  "feature": "github-issues-and-prs",
+  "version": "2.0",
+  "generated": "2026-02-25T14:00:00-05:00",
+  "total_tasks": 5,
+  "max_parallelization": 2,
+
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Merge PR #136 (ajv security fix)",
+      "description": "Merge Dependabot PR #136 which bumps ajv from 6.12.6 to 6.14.0 in /frontend. This is a lockfile-only change addressing a CVE-2025 $data exploit via regex. CI is green, merge state is CLEAN. Use `gh pr merge 136 --squash`.",
+      "phase": "pr-merges",
+      "level": 1,
+      "dependencies": [],
+      "files": {
+        "create": [],
+        "modify": ["frontend/package-lock.json"],
+        "read": []
+      },
+      "verification": {
+        "command": "gh pr view 136 --json state -q '.state' | grep -q MERGED",
+        "timeout_seconds": 60
+      },
+      "skills_required": ["gh-cli"],
+      "consumers": ["TASK-003"],
+      "integration_test": null,
+      "context": "## Spec Context\nPR #136: bump ajv from 6.12.6 to 6.14.0 in /frontend. Security fix for CVE-2025 $data exploit via regex. Lockfile-only change, CI green, CLEAN merge state.\n\n## Commands\ngh pr merge 136 --squash\ngh pr view 136 --json state"
+    },
+    {
+      "id": "TASK-002",
+      "title": "Merge PR #135 (minimatch + nodemon)",
+      "description": "Merge Dependabot PR #135 which bumps minimatch and nodemon in /backend. Updates nodemon from 3.1.11 to 3.1.14 (includes minimatch security fix). CI is green, merge state is CLEAN. This supersedes PR #134. Use `gh pr merge 135 --squash`.",
+      "phase": "pr-merges",
+      "level": 1,
+      "dependencies": [],
+      "files": {
+        "create": [],
+        "modify": ["backend/package.json", "backend/package-lock.json"],
+        "read": []
+      },
+      "verification": {
+        "command": "gh pr view 135 --json state -q '.state' | grep -q MERGED",
+        "timeout_seconds": 60
+      },
+      "skills_required": ["gh-cli"],
+      "consumers": ["TASK-003"],
+      "integration_test": null,
+      "context": "## Spec Context\nPR #135: bump minimatch and nodemon in /backend. Updates nodemon 3.1.11 -> 3.1.14 with minimatch security fix. CI green, CLEAN. Supersedes PR #134.\n\n## Commands\ngh pr merge 135 --squash\ngh pr view 135 --json state"
+    },
+    {
+      "id": "TASK-003",
+      "title": "Close PR #134 (superseded by #135)",
+      "description": "After PR #135 is merged, close PR #134 which is superseded (nodemon 3.1.13 vs 3.1.14). Dependabot may auto-close it due to merge conflict. If not auto-closed, manually close with `gh pr close 134 --comment 'Superseded by #135'`.",
+      "phase": "pr-cleanup",
+      "level": 2,
+      "dependencies": ["TASK-002"],
+      "files": {
+        "create": [],
+        "modify": [],
+        "read": []
+      },
+      "verification": {
+        "command": "gh pr view 134 --json state -q '.state' | grep -qE 'CLOSED|MERGED'",
+        "timeout_seconds": 60
+      },
+      "skills_required": ["gh-cli"],
+      "consumers": ["TASK-004"],
+      "integration_test": null,
+      "context": "## Spec Context\nPR #134: nodemon 3.1.11 -> 3.1.13. Superseded by PR #135 (nodemon 3.1.14). Close after #135 merge. Dependabot may auto-close.\n\n## Commands\ngh pr view 134 --json state\ngh pr close 134 --comment 'Superseded by #135 which includes nodemon 3.1.14 and minimatch security fix'"
+    },
+    {
+      "id": "TASK-004",
+      "title": "Fix frontend Dockerfile ENV format (issue #132)",
+      "description": "Replace 5 legacy `ENV key value` lines with `ENV key=value` format in frontend/Dockerfile. Then commit the change, push to main, and close issue #132.\n\nLines to fix:\n- Line 21: ENV NEXT_TELEMETRY_DISABLED 1 -> ENV NEXT_TELEMETRY_DISABLED=1\n- Line 30: ENV NODE_ENV production -> ENV NODE_ENV=production\n- Line 32: ENV NEXT_TELEMETRY_DISABLED 1 -> ENV NEXT_TELEMETRY_DISABLED=1\n- Line 56: ENV PORT 3000 -> ENV PORT=3000\n- Line 57: ENV HOSTNAME \"0.0.0.0\" -> ENV HOSTNAME=\"0.0.0.0\"",
+      "phase": "dockerfile-fix",
+      "level": 3,
+      "dependencies": ["TASK-001", "TASK-003"],
+      "files": {
+        "create": [],
+        "modify": ["frontend/Dockerfile"],
+        "read": []
+      },
+      "verification": {
+        "command": "! grep -P '^ENV\\s+\\w+\\s+[^=]' frontend/Dockerfile",
+        "timeout_seconds": 30
+      },
+      "skills_required": ["docker"],
+      "consumers": ["TASK-005"],
+      "integration_test": null,
+      "context": "## Spec Context\nIssue #132: Frontend Dockerfile uses legacy ENV format. Replace `ENV key value` with `ENV key=value` on 5 lines. Commit directly to main after PR merges.\n\n## Docker Security\nENV key=value is the modern Docker syntax. The legacy format emits LegacyKeyValueFormat warnings."
+    },
+    {
+      "id": "TASK-005",
+      "title": "Verify final state and close issue #132",
+      "description": "Pull latest main, verify all PRs are in correct state (136 MERGED, 135 MERGED, 134 CLOSED), verify Dockerfile has no legacy ENV format, and close GitHub issue #132 with a comment summarizing what was done.",
+      "phase": "verification",
+      "level": 4,
+      "dependencies": ["TASK-004"],
+      "files": {
+        "create": [],
+        "modify": [],
+        "read": ["frontend/Dockerfile"]
+      },
+      "verification": {
+        "command": "gh issue view 132 --json state -q '.state' | grep -q CLOSED",
+        "timeout_seconds": 60
+      },
+      "skills_required": ["gh-cli"],
+      "consumers": [],
+      "integration_test": null,
+      "context": "## Spec Context\nFinal verification: confirm PR #136 MERGED, PR #135 MERGED, PR #134 CLOSED, issue #132 CLOSED. Verify no legacy ENV format in frontend/Dockerfile."
+    }
+  ],
+
+  "levels": {
+    "1": {
+      "name": "pr-merges",
+      "tasks": ["TASK-001", "TASK-002"],
+      "parallel": true,
+      "depends_on_levels": []
+    },
+    "2": {
+      "name": "pr-cleanup",
+      "tasks": ["TASK-003"],
+      "parallel": false,
+      "depends_on_levels": [1]
+    },
+    "3": {
+      "name": "dockerfile-fix",
+      "tasks": ["TASK-004"],
+      "parallel": false,
+      "depends_on_levels": [2]
+    },
+    "4": {
+      "name": "verification",
+      "tasks": ["TASK-005"],
+      "parallel": false,
+      "depends_on_levels": [3]
+    }
+  },
+
+  "conflict_matrix": {
+    "description": "No conflicts — tasks touch different files and execute sequentially after Level 1",
+    "conflicts": []
+  }
+}

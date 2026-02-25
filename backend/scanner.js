@@ -73,19 +73,14 @@ async function processQuery(db, query, sal) {
     const lastChecked = await getQueryLastChecked(db, id);
     console.log(`Last checked: ${lastChecked.toISOString()}`);
 
-    // Check if this is a first query (more than 30 days ago)
+    // Check if this is a stale query (more than 30 days since last check)
     const daysSinceLastCheck = Math.floor((Date.now() - lastChecked.getTime()) / (1000 * 60 * 60 * 24));
-    const isFirstQuery = daysSinceLastCheck > 30;
-    
-    // For first queries, pull 90 days of data. For recent queries, use the optimized approach
-    let vulnerabilities;
-    if (isFirstQuery) {
-      console.log(`First query detected - pulling 90 days of data for ${cpe_id}`);
-      vulnerabilities = await nvdClient.fetchRecentVulnerabilitiesByCPE(cpe_id, 90);
-    } else {
-      console.log(`Recent query - using optimized approach for ${cpe_id}`);
-      vulnerabilities = await nvdClient.fetchVulnerabilitiesModifiedSince(cpe_id, lastChecked);
-    }
+    const isStaleCheck = daysSinceLastCheck > 30;
+
+    console.log(`${isStaleCheck ? 'Stale check' : 'Recent check'} - ${isStaleCheck ? 'pulling 90 days of data' : 'using optimized approach'} for ${cpe_id}`);
+    const vulnerabilities = isStaleCheck
+      ? await nvdClient.fetchRecentVulnerabilitiesByCPE(cpe_id, 90)
+      : await nvdClient.fetchVulnerabilitiesModifiedSince(cpe_id, lastChecked);
 
     if (vulnerabilities.length === 0) {
       await logScan(db, id, cpe_id, 'success', 'No new vulnerabilities found');
@@ -237,16 +232,7 @@ async function scanSpecificCPE(cpeId, db) {
       if (success) {
         // Mark as processed
         for (const vuln of newVulnerabilities) {
-          await markCVEProcessed(
-            db,
-            vuln.cveId,
-            cpeId,
-            vuln.severity,
-            vuln.cvssScore,
-            vuln.description,
-            vuln.nvdUrl,
-            vuln.publishedDate
-          );
+          await markCVEProcessed(db, vuln.cveId, cpeId, vuln);
         }
       }
 
@@ -255,12 +241,12 @@ async function scanSpecificCPE(cpeId, db) {
         vulnerabilities: newVulnerabilities,
         notificationSent: success
       };
-    } else {
-      return {
-        message: `Found ${vulnerabilities.length} vulnerabilities, but all already processed`,
-        vulnerabilities: []
-      };
     }
+
+    return {
+      message: `Found ${vulnerabilities.length} vulnerabilities, but all already processed`,
+      vulnerabilities: []
+    };
 
   } catch (error) {
     console.error(`Manual scan failed for ${cpeId}:`, error);

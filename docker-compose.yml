@@ -11,8 +11,9 @@ services:
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
       - PORT=3000
     volumes:
-      - ./data:/app/data:rw
       - ./backend:/app:rw
+      - /app/node_modules
+      - ./data:/app/data:rw
     user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
     # User mapping for development - set USER_ID/GROUP_ID in .env if needed
     restart: unless-stopped
@@ -42,7 +43,7 @@ services:
     # Rootless Docker compatibility - no user mapping needed for frontend
     # as the Dockerfile already handles non-root user creation
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://0.0.0.0:3000/"]
       interval: 30s
       timeout: 10s
       retries: 3

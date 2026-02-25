@@ -21,6 +21,45 @@ const apiClient = axios.create({
   }
 });
 
+// Sleep utility
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Parse a single NVD vulnerability response into our format
+function parseVulnerability(vuln, cpeId) {
+  const cve = vuln.cve;
+  const metrics = cve.metrics?.cvssMetricV31?.[0] || cve.metrics?.cvssMetricV30?.[0];
+
+  return {
+    cveId: cve.id,
+    description: cve.descriptions?.find(d => d.lang === 'en')?.value || 'No description available',
+    severity: metrics?.cvssData?.baseSeverity || 'UNKNOWN',
+    cvssScore: metrics?.cvssData?.baseScore || 0,
+    publishedDate: cve.published,
+    lastModifiedDate: cve.lastModified,
+    nvdUrl: `https://nvd.nist.gov/vuln/detail/${cve.id}`,
+    cpeMatch: cpeId
+  };
+}
+
+// Parse vulnerability list from NVD response
+function parseVulnerabilities(data, cpeId) {
+  return data.vulnerabilities?.map(vuln => parseVulnerability(vuln, cpeId)) || [];
+}
+
+// Handle API errors with retry logic
+async function handleAPIError(error, context, retryCount, maxRetries, retryFn) {
+  console.error(`Error fetching ${context}:`, error.message);
+
+  if ((error.response?.status === 429 || error.response?.status === 404) && retryCount < maxRetries) {
+    console.log(`API returned ${error.response?.status}, waiting 30 seconds before retry... (attempt ${retryCount + 1}/${maxRetries + 1})`);
+    await sleep(30000);
+    return retryFn(retryCount + 1);
+  }
+
+  console.log(`Failed to fetch ${context} after ${retryCount + 1} attempts. Returning empty result.`);
+  return null;
+}
+
 // Rate limiting function
 async function enforceRateLimit() {
   const now = Date.now();
@@ -36,7 +75,7 @@ async function enforceRateLimit() {
     const waitTime = 30000 - (now - windowStartTime);
     if (waitTime > 0) {
       console.log(`Rate limit approaching, waiting ${Math.ceil(waitTime/1000)} seconds...`);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      await sleep(waitTime);
       requestCount = 0;
       windowStartTime = Date.now();
     }
@@ -46,7 +85,7 @@ async function enforceRateLimit() {
   const timeSinceLastRequest = now - lastRequestTime;
   if (timeSinceLastRequest < RATE_LIMIT_DELAY) {
     const waitTime = RATE_LIMIT_DELAY - timeSinceLastRequest;
-    await new Promise(resolve => setTimeout(resolve, waitTime));
+    await sleep(waitTime);
   }
 
   lastRequestTime = Date.now();
@@ -74,22 +113,7 @@ async function fetchVulnerabilitiesByCPE(cpeId, startIndex = 0, resultsPerPage =
 
     const data = response.data;
 
-    // Extract relevant vulnerability information
-    const vulnerabilities = data.vulnerabilities?.map(vuln => {
-      const cve = vuln.cve;
-      const metrics = cve.metrics?.cvssMetricV31?.[0] || cve.metrics?.cvssMetricV30?.[0];
-
-      return {
-        cveId: cve.id,
-        description: cve.descriptions?.find(d => d.lang === 'en')?.value || 'No description available',
-        severity: metrics?.cvssData?.baseSeverity || 'UNKNOWN',
-        cvssScore: metrics?.cvssData?.baseScore || 0,
-        publishedDate: cve.published,
-        lastModifiedDate: cve.lastModified,
-        nvdUrl: `https://nvd.nist.gov/vuln/detail/${cve.id}`,
-        cpeMatch: cpeId
-      };
-    }) || [];
+    const vulnerabilities = parseVulnerabilities(data, cpeId);
 
     return {
       vulnerabilities,
@@ -100,24 +124,13 @@ async function fetchVulnerabilitiesByCPE(cpeId, startIndex = 0, resultsPerPage =
     };
 
   } catch (error) {
-    console.error(`Error fetching vulnerabilities for CPE ${cpeId}:`, error.message);
-
-    if (error.response?.status === 429 || error.response?.status === 404) {
-      // Rate limited or API key issue - wait and retry once
-      console.log(`API returned ${error.response?.status}, waiting 30 seconds before retry...`);
-      await new Promise(resolve => setTimeout(resolve, 30000));
-      return fetchVulnerabilitiesByCPE(cpeId, startIndex, resultsPerPage);
-    }
-
-    // Return empty result instead of throwing to prevent server crashes
-    console.log(`Failed to fetch vulnerabilities for CPE ${cpeId}. Returning empty result.`);
-    return {
-      vulnerabilities: [],
-      totalResults: 0,
-      startIndex: 0,
-      resultsPerPage: 0,
-      hasMore: false
-    };
+    const result = await handleAPIError(
+      error,
+      `vulnerabilities for CPE ${cpeId}`,
+      0, 1,
+      () => fetchVulnerabilitiesByCPE(cpeId, startIndex, resultsPerPage)
+    );
+    return result || { vulnerabilities: [], totalResults: 0, startIndex: 0, resultsPerPage: 0, hasMore: false };
   }
 }
 
@@ -202,38 +215,19 @@ async function fetchRecentVulnerabilitiesByCPE(cpeId, days = 7, retryCount = 0) 
 
     const data = response.data;
 
-    const vulnerabilities = data.vulnerabilities?.map(vuln => {
-      const cve = vuln.cve;
-      const metrics = cve.metrics?.cvssMetricV31?.[0] || cve.metrics?.cvssMetricV30?.[0];
-
-      return {
-        cveId: cve.id,
-        description: cve.descriptions?.find(d => d.lang === 'en')?.value || 'No description available',
-        severity: metrics?.cvssData?.baseSeverity || 'UNKNOWN',
-        cvssScore: metrics?.cvssData?.baseScore || 0,
-        publishedDate: cve.published,
-        lastModifiedDate: cve.lastModified,
-        nvdUrl: `https://nvd.nist.gov/vuln/detail/${cve.id}`,
-        cpeMatch: cpeId
-      };
-    }) || [];
+    const vulnerabilities = parseVulnerabilities(data, cpeId);
 
     console.log(`Fetched ${vulnerabilities.length} recent vulnerabilities for CPE ${cpeId}`);
     return vulnerabilities;
 
   } catch (error) {
-    console.error(`Error fetching recent vulnerabilities for CPE ${cpeId}:`, error.message);
-
-    if ((error.response?.status === 429 || error.response?.status === 404) && retryCount < maxRetries) {
-      // Rate limited or API key issue - wait and retry once
-      console.log(`API returned ${error.response?.status}, waiting 30 seconds before retry... (attempt ${retryCount + 1}/${maxRetries + 1})`);
-      await new Promise(resolve => setTimeout(resolve, 30000));
-      return fetchRecentVulnerabilitiesByCPE(cpeId, days, retryCount + 1);
-    }
-
-    // If we've exhausted retries or it's a different error, return empty array instead of throwing
-    console.log(`Failed to fetch vulnerabilities for CPE ${cpeId} after ${retryCount + 1} attempts. Returning empty array.`);
-    return [];
+    const result = await handleAPIError(
+      error,
+      `recent vulnerabilities for CPE ${cpeId}`,
+      retryCount, maxRetries,
+      (nextRetry) => fetchRecentVulnerabilitiesByCPE(cpeId, days, nextRetry)
+    );
+    return result || [];
   }
 }
 
@@ -248,21 +242,16 @@ async function fetchVulnerabilitiesModifiedSince(cpeId, lastCheckDate, retryCoun
     const endDate = new Date();
     const startDate = new Date(lastCheckDate);
     
-    // For first-time queries or very old checks, pull up to 1 year of data
+    // For stale queries (>30 days), pull up to 1 year with 90-day minimum
     // For recent checks, limit to 7 days to avoid huge datasets
     const daysSinceLastCheck = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
-    const isFirstQuery = daysSinceLastCheck > 30; // If last check was more than 30 days ago
-    const actualDaysBack = isFirstQuery ? Math.min(daysSinceLastCheck, 365) : Math.min(daysSinceLastCheck, 7);
-    
-    // For first queries, ensure we get at least 90 days to catch more vulnerabilities
-    const minFirstQueryDays = 90;
-    let finalDaysBack = actualDaysBack;
-    if (isFirstQuery && actualDaysBack < minFirstQueryDays) {
-      finalDaysBack = minFirstQueryDays;
-    }
-    
+    const isStaleCheck = daysSinceLastCheck > 30;
+    const minWindowDays = isStaleCheck ? 90 : 1;
+    const maxWindowDays = isStaleCheck ? 365 : 7;
+    const queryWindowDays = Math.min(Math.max(daysSinceLastCheck, minWindowDays), maxWindowDays);
+
     const adjustedStartDate = new Date();
-    adjustedStartDate.setDate(endDate.getDate() - finalDaysBack);
+    adjustedStartDate.setDate(endDate.getDate() - queryWindowDays);
 
     const params = {
       virtualMatchString: cpeId,
@@ -271,7 +260,7 @@ async function fetchVulnerabilitiesModifiedSince(cpeId, lastCheckDate, retryCoun
       resultsPerPage: 100
     };
 
-    console.log(`Fetching vulnerabilities published in last ${finalDaysBack} days for CPE: ${cpeId} ${isFirstQuery ? '(first query - min 90 days)' : '(recent check - 7 days max)'}`);
+    console.log(`Fetching vulnerabilities published in last ${queryWindowDays} days for CPE: ${cpeId} ${isStaleCheck ? '(stale check - min 90 days)' : '(recent check - 7 days max)'}`);
 
     const response = await apiClient.get(NVD_API_BASE_URL, { params });
 
@@ -281,21 +270,7 @@ async function fetchVulnerabilitiesModifiedSince(cpeId, lastCheckDate, retryCoun
 
     const data = response.data;
 
-    const vulnerabilities = data.vulnerabilities?.map(vuln => {
-      const cve = vuln.cve;
-      const metrics = cve.metrics?.cvssMetricV31?.[0] || cve.metrics?.cvssMetricV30?.[0];
-
-      return {
-        cveId: cve.id,
-        description: cve.descriptions?.find(d => d.lang === 'en')?.value || 'No description available',
-        severity: metrics?.cvssData?.baseSeverity || 'UNKNOWN',
-        cvssScore: metrics?.cvssData?.baseScore || 0,
-        publishedDate: cve.published,
-        lastModifiedDate: cve.lastModified,
-        nvdUrl: `https://nvd.nist.gov/vuln/detail/${cve.id}`,
-        cpeMatch: cpeId
-      };
-    }) || [];
+    const vulnerabilities = parseVulnerabilities(data, cpeId);
 
     // Filter by lastModifiedDate on the client side since API doesn't support it
     const filteredVulnerabilities = vulnerabilities.filter(vuln => {
@@ -306,18 +281,14 @@ async function fetchVulnerabilitiesModifiedSince(cpeId, lastCheckDate, retryCoun
     console.log(`Found ${filteredVulnerabilities.length} vulnerabilities modified since ${lastCheckDate.toISOString()} (from ${vulnerabilities.length} total)`);
     return filteredVulnerabilities;
 
-
   } catch (error) {
-    console.error(`Error fetching modified vulnerabilities for CPE ${cpeId}:`, error.message);
-
-    if ((error.response?.status === 429 || error.response?.status === 404) && retryCount < maxRetries) {
-      console.log(`API returned ${error.response?.status}, waiting 30 seconds before retry... (attempt ${retryCount + 1}/${maxRetries + 1})`);
-      await new Promise(resolve => setTimeout(resolve, 30000));
-      return fetchVulnerabilitiesModifiedSince(cpeId, lastCheckDate, retryCount + 1);
-    }
-
-    console.log(`Failed to fetch modified vulnerabilities for CPE ${cpeId} after ${retryCount + 1} attempts. Returning empty array.`);
-    return [];
+    const result = await handleAPIError(
+      error,
+      `modified vulnerabilities for CPE ${cpeId}`,
+      retryCount, maxRetries,
+      (nextRetry) => fetchVulnerabilitiesModifiedSince(cpeId, lastCheckDate, nextRetry)
+    );
+    return result || [];
   }
 }
 

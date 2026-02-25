@@ -7,7 +7,7 @@ const fetcher = async (url) => {
     const response = await axios.get(url);
     return response.data;
   } catch (error) {
-    console.error(`SWR fetch error for ${url}:`, error);
+    console.error(`SWR fetch error for ${url}:`, error.message);
     throw error;
   }
 };
@@ -23,7 +23,19 @@ const swrConfig = {
   loadingTimeout: 10000,
 };
 
-// Custom hook for fetching data with SWR
+/**
+ * @typedef {Object} Query
+ * @property {string} id
+ * @property {string} cpe_id
+ * @property {string} [name]
+ * @property {string} [description]
+ * @property {string} createdAt
+ */
+
+/**
+ * Fetch all queries.
+ * @returns {{ queries: Query[], isLoading: boolean, isError: Error|undefined, mutate: Function }}
+ */
 export const useQueries = () => {
   const { data, error, mutate } = useSWR('/api/queries', fetcher, swrConfig);
 
@@ -35,6 +47,7 @@ export const useQueries = () => {
   };
 };
 
+/** @returns {{ stats: Object|undefined, isLoading: boolean, isError: Error|undefined, mutate: Function }} */
 export const useStats = () => {
   const { data, error, mutate } = useSWR('/api/stats', fetcher, swrConfig);
 
@@ -46,6 +59,7 @@ export const useStats = () => {
   };
 };
 
+/** @returns {{ queriesWithStats: Array, isLoading: boolean, isError: Error|undefined, mutate: Function }} */
 export const useQueriesWithStats = () => {
   const { data, error, mutate } = useSWR('/api/queries-with-stats', fetcher, swrConfig);
 
@@ -57,6 +71,11 @@ export const useQueriesWithStats = () => {
   };
 };
 
+/**
+ * Fetch CVEs for a specific query.
+ * @param {string|null} queryId
+ * @returns {{ cves: Array, isLoading: boolean, isError: Error|undefined, mutate: Function }}
+ */
 export const useCVEs = (queryId) => {
   const { data, error, mutate } = useSWR(
     queryId ? `/api/queries/${queryId}/cves` : null,

@@ -89,7 +89,6 @@ app.post('/api/queries', async (req, res) => {
     // Auto-fetch CPE details if name/description are empty
     if (!name || !description) {
       try {
-        const nvdClient = require('./nvd-client');
         console.log(`Auto-fetching CPE details for: ${cpe_id}`);
         
         // Use existing function to get vulnerability data
@@ -191,7 +190,6 @@ app.post('/api/test-cpe', async (req, res) => {
       return res.status(400).json({ error: 'CPE ID is required' });
     }
 
-    const nvdClient = require('./nvd-client');
     console.log(`Testing CPE: ${cpe_id}`);
     
     const result = await nvdClient.fetchVulnerabilitiesByCPE(cpe_id, 0, 10);

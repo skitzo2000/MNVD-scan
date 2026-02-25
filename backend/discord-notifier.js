@@ -1,5 +1,20 @@
 const axios = require('axios');
 
+// Shared helpers
+function truncateString(str, maxLength, suffix = '...') {
+  if (str.length <= maxLength) return str;
+  return str.substring(0, maxLength - suffix.length) + suffix;
+}
+
+function countSeverities(vulnerabilities) {
+  return {
+    critical: vulnerabilities.filter(v => v.severity === 'CRITICAL').length,
+    high: vulnerabilities.filter(v => v.severity === 'HIGH').length,
+    medium: vulnerabilities.filter(v => v.severity === 'MEDIUM').length,
+    low: vulnerabilities.filter(v => v.severity === 'LOW').length
+  };
+}
+
 // Discord webhook timeout
 const WEBHOOK_TIMEOUT = 10000; // 10 seconds
 
@@ -28,10 +43,9 @@ async function sendNotification(webhookUrl, vulnerability) {
     if (response.status === 204) {
       console.log(`Discord notification sent successfully for ${vulnerability.cveId}`);
       return true;
-    } else {
-      console.warn(`Discord webhook returned status ${response.status} for ${vulnerability.cveId}`);
-      return false;
     }
+    console.warn(`Discord webhook returned status ${response.status} for ${vulnerability.cveId}`);
+    return false;
 
   } catch (error) {
     console.error(`Failed to send Discord notification for ${vulnerability.cveId}:`, error.message);
@@ -55,10 +69,7 @@ function createVulnerabilityEmbed(vulnerability) {
   // Color based on severity
   const color = getSeverityColor(severity);
 
-  // Truncate description if too long
-  const truncatedDescription = description.length > 500
-    ? description.substring(0, 497) + '...'
-    : description;
+  const truncatedDescription = truncateString(description, 500);
 
   return {
     title: `🚨 New Vulnerability Detected: ${cveId}`,
@@ -132,10 +143,9 @@ async function sendBatchNotification(webhookUrl, vulnerabilities, cpeId) {
     if (response.status === 204) {
       console.log(`Batch Discord notification sent for ${vulnerabilities.length} vulnerabilities`);
       return true;
-    } else {
-      console.warn(`Batch Discord webhook returned status ${response.status}`);
-      return false;
     }
+    console.warn(`Batch Discord webhook returned status ${response.status}`);
+    return false;
 
   } catch (error) {
     console.error(`Failed to send batch Discord notification:`, error.message);
@@ -145,10 +155,7 @@ async function sendBatchNotification(webhookUrl, vulnerabilities, cpeId) {
 
 // Create embed for batch notifications
 function createBatchEmbed(vulnerabilities, cpeId) {
-  const criticalCount = vulnerabilities.filter(v => v.severity === 'CRITICAL').length;
-  const highCount = vulnerabilities.filter(v => v.severity === 'HIGH').length;
-  const mediumCount = vulnerabilities.filter(v => v.severity === 'MEDIUM').length;
-  const lowCount = vulnerabilities.filter(v => v.severity === 'LOW').length;
+  const counts = countSeverities(vulnerabilities);
 
   const description = vulnerabilities
     .slice(0, 5) // Show first 5
@@ -170,7 +177,7 @@ function createBatchEmbed(vulnerabilities, cpeId) {
       },
       {
         name: 'Summary',
-        value: `Critical: ${criticalCount} | High: ${highCount} | Medium: ${mediumCount} | Low: ${lowCount}`,
+        value: `Critical: ${counts.critical} | High: ${counts.high} | Medium: ${counts.medium} | Low: ${counts.low}`,
         inline: true
       },
       {
