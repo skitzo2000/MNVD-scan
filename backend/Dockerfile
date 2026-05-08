@@ -1,5 +1,5 @@
 # Backend Dockerfile for NVD Scanner
-FROM node:25-slim AS base
+FROM node:26-slim AS base
 
 WORKDIR /app
 
