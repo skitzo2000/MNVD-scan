@@ -16,25 +16,25 @@
     "clean": "rm -rf .next out node_modules/.cache"
   },
   "dependencies": {
-    "next": "^16.1.6",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "@mui/material": "^7.3.8",
-    "@mui/icons-material": "^7.3.8",
+    "next": "^16.2.10",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "@mui/material": "^9.2.0",
+    "@mui/icons-material": "^9.2.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@emotion/cache": "^11.14.0",
-    "axios": "^1.13.5",
-    "swr": "^2.4.0"
+    "axios": "^1.18.1",
+    "swr": "^2.4.2"
   },
   "devDependencies": {
-    "eslint": "^9.39.2",
-    "@eslint/js": "^9.36.0",
+    "eslint": "^10.7.0",
+    "@eslint/js": "^10.0.1",
     "eslint-plugin-react": "^7.37.2",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "@typescript-eslint/parser": "^8.53.0",
-    "@typescript-eslint/eslint-plugin": "^8.53.0",
-    "@next/bundle-analyzer": "^16.1.2",
-    "js-yaml": "^4.1.1"
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "@typescript-eslint/parser": "^8.64.0",
+    "@typescript-eslint/eslint-plugin": "^8.64.0",
+    "@next/bundle-analyzer": "^16.2.10",
+    "js-yaml": "^5.2.1"
   }
 }
